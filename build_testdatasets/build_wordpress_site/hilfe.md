@@ -13,7 +13,7 @@
 - docker-compose down -v 
 
 # CLI auführen
-- dokcer-compose ps
+- docker-compose ps
 - docker run -it --rm  --volumes-from projekta_wordpress_1 --network container:projekta_wordpress_1  wordpress:cli user list
 
 - docker run -it --rm  --volumes-from projekta_wordpress_1 --network container:projekta_wordpress_1  wordpress:cli /root/install.sh
