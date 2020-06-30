@@ -1,3 +1,4 @@
+<?php
 //Logging User Activity
 
 function microtime_float()
@@ -25,3 +26,4 @@ if (file_exists($filename)) {
 fclose($handle);
 
 //End of Logging Code
+?>
