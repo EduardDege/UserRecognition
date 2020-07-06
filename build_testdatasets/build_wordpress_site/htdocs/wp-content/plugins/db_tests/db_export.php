@@ -16,7 +16,7 @@
  }
 
  function exportDB(){
-   $servername = "localhost";
+   $servername = "127.0.0.1:8801";
    $username = "wordpress";
    $password = "wordpress";
    $dbname = "wordpress";
@@ -43,3 +43,4 @@ $conn->close();
  }
 
  //add_action("wp_after_admin_bar_render", "exportDB");
+?>
