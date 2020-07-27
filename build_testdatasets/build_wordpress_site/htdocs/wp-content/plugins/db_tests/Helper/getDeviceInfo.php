@@ -4,7 +4,6 @@
 
   function getDevice(){
     $deviceInfo = new Browser();
-    echo $deviceInfo->__toString();
     $deviceUser = array(
       "browser" => $deviceInfo->getBrowser(),
       "platform" => $deviceInfo->getPlatform(),

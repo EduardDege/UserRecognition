@@ -12,6 +12,10 @@ function createNewTable($wpdb, $table) {
 		user_agent text NOT NULL,
 		platform text NOT NULL,
 		login_attempt int DEFAULT 0,
+		login_date DATETIME,
+		logout_date DATETIME,
+		duration(ms) text NOT NULL,
+		loginstatus text NOT NULL,
 		PRIMARY KEY  (id)
 	)";
 
