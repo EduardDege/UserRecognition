@@ -3,7 +3,7 @@
 /*
 Plugin Name: User Behavior Analysics if(is)
 Plugin URI: https://www.internet-sicherheit.de/
-Description: This Plugin combine Machine Learning & User and Entity Behavioral Analytics to detect new threats inside a organizat>
+Description: This Plugin combine Machine Learning & User and Entity Behavioral Analytics to detect new threats inside a organization
 Author: Armel Wonga & Eduard Dege
 Version: 1.0.0
 Author URI:
@@ -39,8 +39,6 @@ add_action('admin_menu', 'ubaifis_create_menu');
         insertToDB($wpdb, $table, getDevice(), $user_id);
         show_cookie();
 }*/
-
-
 
 function ubaifis_create_menu() {
 // define admin page in Back-End
