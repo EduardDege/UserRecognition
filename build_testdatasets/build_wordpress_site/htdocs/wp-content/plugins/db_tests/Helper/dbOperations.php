@@ -1,8 +1,8 @@
 <?php
 include '../../../../wp-load.php';
 function createNewTable($wpdb, $table) {
-
-	$table_name = $wpdb->prefix . $table;
+	echo $table;
+	$table_name = $wpdb->prefix . "user_recognition";
 	$sql = "CREATE TABLE $table_name (
 		id mediumint(9) NOT NULL AUTO_INCREMENT,
 		user_id mediumint(9),
@@ -14,7 +14,7 @@ function createNewTable($wpdb, $table) {
 		login_attempt int DEFAULT 0,
 		login_date DATETIME,
 		logout_date DATETIME,
-		duration(ms) text NOT NULL,
+		duration text NOT NULL,
 		loginstatus text NOT NULL,
 		PRIMARY KEY  (id)
 	)";
