@@ -19,9 +19,12 @@ include (ABS_PATH . "/Helper/cookie.php");
 
 
 add_action("init", "set_cookie");
+add_action("init", "start_session");
 add_action('admin_menu', 'test_plugin_setup_menu');
 add_action('wp_login_failed', 'checkUser');
+add_action('wp_login', "addUserToSessionSuccLogin");
 add_action('wp_login', 'saveLastLogin');
+
 add_action('wp_logout', "getLogout");
 // create custom plugin settings menu
 add_action('admin_menu', 'ubaifis_create_menu');
@@ -58,6 +61,7 @@ function ubaifis_settings_page(){
   $user_id = get_current_user_id();
 
   createNewTable($wpdb, $table);
+  createSessionTable($wpdb);
   insertToDB($wpdb, $table, getDevice(), $user_id);
   show_cookie();
 ?>

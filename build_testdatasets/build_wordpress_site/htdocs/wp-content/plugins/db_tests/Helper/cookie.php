@@ -2,7 +2,7 @@
 
 define("ABS_PATH", dirname(__FILE__));
 
-include (ABS_PATH . "/php_class/time_online.class.php");
+include (ABS_PATH . "/javascript/timePage.js");
 
 function show_cookie(){
 
@@ -46,6 +46,16 @@ function create_cookie($visit_time){
 
 function calculateTimeSpend($time){
 
+}
+
+function getFormData(){
+  foreach($_POST as $key=>$post_data){
+        if(is_array($post_data)){
+            echo "You posted:" . $key . " = " . print_r($post_data, true) . "<br>";
+        } else {
+            echo "You posted:" . $key . " = " . $post_data . "<br>";
+        }
+    }
 }
 
  ?>
