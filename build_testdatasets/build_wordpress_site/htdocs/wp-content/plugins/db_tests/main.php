@@ -16,7 +16,7 @@ include (ABS_PATH . "/Helper/getDeviceInfo.php");
 include (ABS_PATH . "/Helper/dbOperations.php");
 include (ABS_PATH . "/Helper/loginOperations.php");
 include (ABS_PATH . "/Helper/cookie.php");
-
+include (ABS_PATH . "/Helper/ip_range.php");
 
 add_action("init", "set_cookie");
 add_action("init", "start_session");
@@ -64,6 +64,8 @@ function ubaifis_settings_page(){
   createSessionTable($wpdb);
   insertToDB($wpdb, $table, getDevice(), $user_id);
   show_cookie();
+
+  echo ip_info($_SERVER['REMOTE_ADDR'], "Country");
 ?>
 <div class="wrap">
     <h1>UBAifis</h1>
@@ -71,6 +73,7 @@ function ubaifis_settings_page(){
 <form method="post" action="options.php">
     <?php settings_fields( 'ubaifis' ); ?>
     <?php do_settings_sections( 'ubaifis' ); ?>
+    <?php   echo ip_info("173.252.110.27", "Country"); ?>
     <table class="form-table">
         <tr valign="top">
             <th scope="row">An oder aus?</th>
