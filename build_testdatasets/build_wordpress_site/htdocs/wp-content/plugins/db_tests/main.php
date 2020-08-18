@@ -64,7 +64,6 @@ function track_user(){
     createSessionTable($wpdb);
     insertToDB($wpdb, $table, getDevice(), $user_id);
     show_cookie();
-    echo $_SERVER["REQUEST_URI"];
 }
 
 function ubaifis_settings_page(){
