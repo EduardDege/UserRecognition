@@ -28,7 +28,8 @@ add_action('wp_login', 'saveLastLogin');
 add_action('wp_logout', "getLogout");
 // create custom plugin settings menu
 add_action('admin_menu', 'ubaifis_create_menu');
-
+// hook trace user
+add_action("template_redirect", "track_user");
 /**function test_plugin_setup_menu(){
         add_menu_page( 'Test Plugin Page', 'Test Plugin', 'manage_options', 'test-plugin', 'test_init' );
 }*/
@@ -52,7 +53,17 @@ function ubaifis_create_menu() {
     //https://developer.wordpress.org/resource/dashicons/#search
 
     //call register settings function
-    add_action( 'admin_init', 'register_ubaifis_settings' );
+    // add_action( 'admin_init', 'register_ubaifis_settings' );
+}
+function track_user(){
+    global $wpdb;
+    $table = "user_recognition";
+    $user_id = get_current_user_id();
+
+    createNewTable($wpdb, $table);
+    createSessionTable($wpdb);
+    insertToDB($wpdb, $table, getDevice(), $user_id);
+    show_cookie();
 }
 
 function ubaifis_settings_page(){
@@ -65,7 +76,9 @@ function ubaifis_settings_page(){
   insertToDB($wpdb, $table, getDevice(), $user_id);
   show_cookie();
 
-  echo ip_info($_SERVER['REMOTE_ADDR'], "Country");
+  #$ip = $_SE%RVER['REMOTE_ADDR'];
+  #echo $ip;
+  #echo ip_info("108.171.134.41", "Country");
 ?>
 <div class="wrap">
     <h1>UBAifis</h1>
@@ -73,13 +86,7 @@ function ubaifis_settings_page(){
 <form method="post" action="options.php">
     <?php settings_fields( 'ubaifis' ); ?>
     <?php do_settings_sections( 'ubaifis' ); ?>
-    <?php   echo ip_info("173.252.110.27", "Country"); ?>
     <table class="form-table">
-        <tr valign="top">
-            <th scope="row">An oder aus?</th>
-            <td><input type="checkbox" name="onoff" value="1"  <?php echo ( get_option("onoff") == 1 ) ? "checked" : ""; ?> /></t>
-        </tr>
-
         <tr valign="top">
             <th scope="row">Inhalt der Datenbanktabelle</th>
         </tr>

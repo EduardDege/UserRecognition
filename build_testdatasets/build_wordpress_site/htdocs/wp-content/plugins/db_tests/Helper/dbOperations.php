@@ -1,5 +1,5 @@
 <?php
-include '../../../../wp-load.php';
+
 function createNewTable($wpdb, $table) {
 	//echo $table;
 	$table_name = $wpdb->prefix . "user_recognition";
@@ -33,6 +33,8 @@ function createSessionTable($wpdb){
 		ip_address text NOT NULL,
 		login_attempt int DEFAULT 0,
 		attempt_date DATETIME,
+		countrycode text NOT NULL,
+		state text NOT NULL,
 	  PRIMARY KEY  (id)
 	)";
 
@@ -40,7 +42,7 @@ function createSessionTable($wpdb){
 	dbDelta( $sql );
 }
 
-function insertToSessionTable($wpdb, $session_id){
+function insertToSessionTable($wpdb, $session_id, $countrycode, $state){
 
 $table_name = $wpdb->prefix . "session";
 
@@ -49,6 +51,9 @@ $wpdb->insert(
 	array(
 		'session_id' =>  $session_id,
 		'user_ID' => get_current_user_id(),
+		'ip_address' => $_SERVER['REMOTE_ADDR'],
+		'countrycode' => $countrycode,
+		'state' => $state,
 	)
 );
 }

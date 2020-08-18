@@ -12,7 +12,7 @@ function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
         }
     }
     $purpose    = str_replace(array("name", "\n", "\t", " ", "-", "_"), NULL, strtolower(trim($purpose)));
-    $support    = array("country", "countrycode", "state", "region", "city", "location", "address");
+    $support    = array("country", "countrycode", "state", "region", "city", "location", "address", "continent", "continent_code");
     $continents = array(
         "AF" => "Africa",
         "AN" => "Antarctica",
@@ -58,6 +58,12 @@ function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
                     break;
                 case "countrycode":
                     $output = @$ipdat->geoplugin_countryCode;
+                    break;
+                case "continent":
+                    $output =  @$continents[strtoupper($ipdat->geoplugin_continentCode)];
+                    break;
+                case "continent_code":
+                    $output = @$ipdat->geoplugin_continentCode;
                     break;
             }
         }
