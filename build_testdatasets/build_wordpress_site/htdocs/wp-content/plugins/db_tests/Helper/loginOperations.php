@@ -60,14 +60,17 @@ include "/dbOperations.php";
     $user_id = get_current_user_id();
     $login_attempt = $wpdb->get_var("SELECT MAX(login_attempt) FROM {$wpdb->prefix}session WHERE user_id=$id AND attempt_date=(SELECT Max(attempt_date) FROM {$wpdb->prefix}session WHERE user_id=$id)");
     //$wpdb->update("{$wpdb->prefix}session", array("login_attempt"=>(int)$login_attempt + 1, "user_id" => $id), array("session_id"=>$session_id));
-    $wpdb->insert("{$wpdb->prefix}session", array("session_id" => $session_id, "user_id" => $user_id,
+    $wpdb->insert("{$wpdb->prefix}session", array("session_id" => $session_id, "user_id" =>$id,
      "login_attempt"=>(int)$login_attempt + 1, "attempt_date" => date('Y-m-d H:i:s'),
-        "ip_address"=>$_SERVER["REMOTE_ADDR"], "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
-        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")));
+        "ip_address"=>$_SERVER["REMOTE_ADDR"],
+        "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
+      ));
   }
 
   function addUserToSessionSuccLogin($username){
     global $wpdb;
+    $user_id = 0;
     $results = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}users");
     foreach($results as $row){
       if($row->user_login == $username){
@@ -78,7 +81,8 @@ include "/dbOperations.php";
     $push_array = array("user_id" => $user_id, "session_id" => $session_id, "login_attempt" => 0,
         "attempt_date" => date('Y-m-d H:i:s'),"ip_address"=>$_SERVER["REMOTE_ADDR"],
         "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
-        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state"));
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
+      );
     $wpdb->insert("{$wpdb->prefix}session", $push_array);
   }
 
