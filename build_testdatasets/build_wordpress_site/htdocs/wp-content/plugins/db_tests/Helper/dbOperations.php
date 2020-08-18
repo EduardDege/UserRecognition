@@ -16,6 +16,7 @@ function createNewTable($wpdb, $table) {
 		logout_date DATETIME,
 		duration text NOT NULL,
 		loginstatus text NOT NULL,
+		subpage text NOT NULL,
 		PRIMARY KEY  (id)
 	)";
 
@@ -61,7 +62,7 @@ $wpdb->insert(
 function insertToDB($wpdb, $table, $device, $user_id) {
 
 	$table_name = $wpdb->prefix . $table;
-	$push_array = array_merge($device, array("user_id" => $user_id));
+	$push_array = array_merge($device, array("user_id" => $user_id, 'subpage' => $_SERVER["REQUEST_URI"],));
 
 	//print_r($push_array);
 	$wpdb->insert(

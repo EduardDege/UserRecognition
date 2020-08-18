@@ -64,6 +64,7 @@ function track_user(){
     createSessionTable($wpdb);
     insertToDB($wpdb, $table, getDevice(), $user_id);
     show_cookie();
+    echo $_SERVER["REQUEST_URI"];
 }
 
 function ubaifis_settings_page(){
@@ -86,6 +87,7 @@ function ubaifis_settings_page(){
 <form method="post" action="options.php">
     <?php settings_fields( 'ubaifis' ); ?>
     <?php do_settings_sections( 'ubaifis' ); ?>
+
     <table class="form-table">
         <tr valign="top">
             <th scope="row">Inhalt der Datenbanktabelle</th>
