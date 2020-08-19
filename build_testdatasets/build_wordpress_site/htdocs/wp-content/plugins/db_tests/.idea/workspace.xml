@@ -96,14 +96,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ea13ed63-9231-4975-b28b-36fccd946a0f" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Helper/Browser.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/cookie.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/dbOperations.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/getDeviceInfo.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/ip_range.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/javascript/timePage.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Helper/loginOperations.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.php" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/db_tests.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,6 +132,7 @@
       <updated>1597311916043</updated>
       <workItem from="1597311917229" duration="1254000" />
       <workItem from="1597587838568" duration="288000" />
+      <workItem from="1597757283313" duration="2579000" />
     </task>
     <servers />
   </component>
@@ -159,6 +156,10 @@
       <screen x="-1920" y="-118" width="1920" height="1160" />
     </state>
     <state x="-1122" y="386" key="#WordPress/0.0.1280.680/-1920.-118.1920.1160@-1920.-118.1920.1160" timestamp="1597311925171" />
+    <state x="-1117" y="234" key="refactoring.ChangeSignatureDialog" timestamp="1597765762319">
+      <screen x="-1920" y="-118" width="1920" height="1160" />
+    </state>
+    <state x="-1117" y="234" key="refactoring.ChangeSignatureDialog/0.0.1280.680/-1920.-118.1920.1160@-1920.-118.1920.1160" timestamp="1597765762319" />
   </component>
   <component name="WordPressConfiguration" enabled="true">
     <wordpressPath>C:\Users\Ngas03\IdeaProjects\UserRecognition\build_testdatasets\build_wordpress_site\htdocs</wordpressPath>
