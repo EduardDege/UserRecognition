@@ -4,48 +4,8 @@
 """
 
 
-def export():
-    connection = pymysql.connect(host='194.94.127.112',
-                                 user='root',
-                                 password='AYw0D#r/wkf&cDttoObZXn.I1InZR~HX',
-                                 db='WordPress',
-                                 charset='utf8mb4',
-                                 port=3306)
-    # cursorclass=pymysql.cursors.DictCursor)
-
-    # cursor = connection.cursor()
-
-    # Selecting.
-    # query = "SELECT `id` FROM `table` ORDER BY RAND() LIMIT 1"
-    """query = "SELECT `wp_ifiS_02session.session_id` AS session_id, wp_ifiS_02session.ip_address AS ip_address,
-    wp_ifiS_02session.login_attempt AS login_attempt, wp_ifiS_02session.attempt_date AS attempt_date,
-    wp_ifiS_02session.countrycode AS countrycode, wp_ifiS_02session.state AS state,
-    wp_ifiS_02user_recognition.browser AS browser, wp_ifiS_02user_recognition.browser_version AS browser_version,
-    wp_ifiS_02user_recognition.IP AS IP, wp_ifiS_02user_recognition.user_agent AS user_agent,
-    wp_ifiS_02user_recognition.platform AS platform, wp_ifiS_02user_recognition.login_attempt AS login_attempt,
-    wp_ifiS_02user_recognition.login_date AS login_date, wp_ifiS_02user_recognition.logout_date AS logout_date,
-    wp_ifiS_02user_recognition.duration AS duration, wp_ifiS_02user_recognition.loginstatus AS loginstatus,
-    wp_ifiS_02user_recognition.subpage AS subpage FROM wp_ifiS_02session, wp_ifiS_02user_recognition
-    WHERE
-    wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id
-    AND
-    wp_ifiS_02session.login_attempt = wp_ifiS_02user_recognition.login_attempt"""
-
-    # cursor.execute(query)
-
-    # if cursor.rowcount == 0:
-    #    print('No results matched your query.')
-    # else:
-    #    print(cursor.fetchone()['id'])
-
-    # Inserting
-    # query = "INSERT INTO `table` (id) VALUES (1)"
-    # cursor.execute(query)
-
-    connection.commit()  # You need this if you want your changes 'commited' to the database.
-
-
 def exportDBUBAIFIS():
+    start_time = time.time()
     connection = mysql.connector.connect(host='194.94.127.112',
                                          database='WordPress',
                                          user='ifis1',
@@ -61,18 +21,7 @@ def exportDBUBAIFIS():
 
             my_cursor = connection.cursor()
 
-            '''my_cursor.execute('SELECT wp_ifiS_02session.session_id AS session_id, wp_ifiS_02session.ip_address AS ip_address, '
-                             'wp_ifiS_02session.login_attempt AS login_attempt, wp_ifiS_02session.attempt_date AS attempt_date, ' \
-                             'wp_ifiS_02session.countrycode AS countrycode, wp_ifiS_02session.state AS state,' \
-                            'wp_ifiS_02user_recognition.browser AS browser, wp_ifiS_02user_recognition.browser_version AS browser_version,' \
-                            'wp_ifiS_02user_recognition.IP AS IP, wp_ifiS_02user_recognition.user_agent AS user_agent,' \
-                            'wp_ifiS_02user_recognition.platform AS platform, wp_ifiS_02user_recognition.login_attempt AS login_attempt,' \
-                            'wp_ifiS_02user_recognition.login_date AS login_date, wp_ifiS_02user_recognition.logout_date AS logout_date,' \
-                            'wp_ifiS_02user_recognition.duration AS duration, wp_ifiS_02user_recognition.loginstatus AS loginstatus,' \
-                            'wp_ifiS_02user_recognition.subpage AS subpage FROM wp_ifiS_02session INNER JOIN wp_ifiS_02user_recognition' \
-                            'ON wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id')
-                            #'ON wp_ifiS_02session.login_attempt = wp_ifiS_02user_recognition.login_attempt')'''
-
+            # 190 sec
             '''my_cursor.execute('SELECT wp_ifiS_02session.session_id AS session_id, '
                               'wp_ifiS_02session.ip_address AS ip_address, '
                               'wp_ifiS_02session.login_attempt AS login_attempt, '
@@ -80,7 +29,6 @@ def exportDBUBAIFIS():
                               'wp_ifiS_02session.countrycode AS countrycode, '
                               'wp_ifiS_02session.state AS state, wp_ifiS_02user_recognition.browser AS browser, '
                               'wp_ifiS_02user_recognition.browser_version AS browser_version, '
-                              'wp_ifiS_02user_recognition.IP AS IP, '
                               'wp_ifiS_02user_recognition.user_agent AS user_agent, '
                               'wp_ifiS_02user_recognition.platform AS platform, '
                               'wp_ifiS_02user_recognition.login_attempt AS login_attempt, '
@@ -92,21 +40,66 @@ def exportDBUBAIFIS():
                               'FROM wp_ifiS_02session '
                               'JOIN wp_ifiS_02user_recognition ON '
                               'wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id')'''
+            # 167 sec
+            '''my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, wp.countrycode, wp.user_id,'
+                              'wp.state, ur.browser, ur.browser_version, ur.user_agent, ur.platform,'
+                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus,'
+                              'ur.subpage FROM wp_ifiS_02session wp '
+                              'INNER JOIN wp_ifiS_02user_recognition ur '
+                              'ON ur.user_id = wp.user_id '
+                              )'''
+            # 164 sec
+            '''my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
+                              'wp.countrycode, wp.user_id, wp.state, reco.*'
+                              ' FROM ( SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+                              ' FROM wp_ifiS_02user_recognition ur'
+                              ') reco '
+                              'INNER JOIN wp_ifiS_02session wp ON wp.user_id = reco.user_id')'''
+            # 165 sec
+            ''' my_cursor.execute('WITH sub AS ('
+                              'SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
+                              'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp'
+                              ')'
+                              'SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, '
+                              'ur.loginstatus, ur.subpage, sub.*'
+                              ' FROM wp_ifiS_02user_recognition ur INNER JOIN sub ON ur.user_id = sub.user_id')'''
 
-            my_cursor.execute('SELECT wp_ifiS_02session.session_id AS session_id, '
-                              'wp_ifiS_02session.ip_address AS ip_address '
-                              'FROM wp_ifiS_02session')
+            my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
+                              'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
 
-            result = my_cursor.fetchall()
+            result_session = my_cursor.fetchall()
+
+            my_cursor.execute('SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+                              ' FROM wp_ifiS_02user_recognition ur')
+            result_ur = my_cursor.fetchall()
 
             names = ["session_id", "ip_address"]
-            df = DataFrame(result, columns=["session_id", "ip_address"])
+            # df = DataFrame(result, columns=["session_id", "ip_address"])
 
-            print(df)
+            df_session = DataFrame(result_session, columns=["session_id", "ip_address", "login_attempt", "countrycode",
+                                                            "user_id", "state"])
+            df_ur = DataFrame(result_ur, columns=["user_id", "browser", "browser_version", "user_agent", "platform",
+                                                  "login_attempt", "login_date", "logout_date", "duration",
+                                                  "loginstatus", "subpage"])
 
+            merged = pd.merge(df_session, df_ur, how='inner', left_on='user_id', right_on='user_id')
 
+            frames = [df_session, df_ur]
 
+            result = pd.concat(frames)
 
+            pd.set_option("display.max_rows", None)
+            pd.set_option("display.max_columns", None)
+            pd.set_option("display.width", None)
+
+            # print(merged)
+            print(result)
+            print(len(result_session))
+            print(len(result_ur))
+            print(time.time() - start_time)
 
     except Error as e:
         print("Error while connecting to MySQL", e)
@@ -117,45 +110,12 @@ def exportDBUBAIFIS():
             print("MySQL connection is closed")
 
 
-def exportedDB():
-    """
-    This function connect the user to the DB and export the Data for the ML-Algo
-    :return: Data
-    """
-    mydbconnect = mysql.connector.connect(host="localhost", user="root", passwd="", database="tmudb")
-
-    mycursor = mydbconnect.cursor()
-
-    mycursor.execute("select * from wp_users")
-
-    result = mycursor.fetchall()
-
-    for i in result:
-        print(i)
-
-
-def exportDB():
-    mydbconnect = mysql.connector.connect(host="194.94.127.112", user="ifis1",
-                                          passwd="b0QrDr8ShG#e@iMWDwGKlgw3", database="WordPress")
-
-    mycursor = mydbconnect.cursor()
-
-    mycursor.execute("SELECT * FROM `wp_ifiS_02session` ORDER BY `id` ASC")
-
-    result = mycursor.fetchall()
-
-    for i in result:
-        print(i)
-
-
 if __name__ == '__main__':
     import pymysql
     import mysql.connector
     from mysql.connector import Error
+    import time
+    import pandas as pd
     from pandas import DataFrame
 
-    # import sqlparse
-
-    # exportdb()
-    # exportedDB()
     exportDBUBAIFIS()
