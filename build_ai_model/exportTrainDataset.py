@@ -46,6 +46,10 @@ def export():
 
 
 def exportDBUBAIFIS():
+    """
+    This function connect the user to the DB and export the Data for the ML-Algo
+    :return: Data
+    """
     start_time = time.time()
 
     try:
@@ -74,9 +78,15 @@ def exportDBUBAIFIS():
                             'wp_ifiS_02user_recognition.subpage AS subpage FROM wp_ifiS_02session JOIN wp_ifiS_02user_recognition,'
                             'ON wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id,'
                             'ON wp_ifiS_02session.login_attempt = wp_ifiS_02user_recognition.login_attempt') '''
-            mycursor.execute('SELECT * FROM `wp_ifiS_02user_recognition` ORDER BY `id` ASC')
-            userRecoTab = mycursor.fetchall()
-            print(userRecoTab)
+            # mycursor.execute('SELECT * FROM `wp_ifiS_02user_recognition` ORDER BY `id` ASC')
+            # userRecoTab = mycursor.fetchall()
+            # print(userRecoTab)
+
+            sql_query = pd.read_sql_query('SELECT * FROM `wp_ifiS_02user_recognition` ORDER BY `id` ASC', connection)
+            print(sql_query)
+            print(type(sql_query))
+
+
 
         def fetchUserRecoTab():
             mycursor.execute('SELECT * FROM `wp_ifiS_02user_recognition` ORDER BY `id` ASC')
@@ -118,58 +128,111 @@ def exportedDB():
     This function connect the user to the DB and export the Data for the ML-Algo
     :return: Data
     """
-    mydbconnect = mysql.connector.connect(host="localhost", user="root", passwd="", database="tmudb")
+    # Some other example server values are
+    # server = 'localhost\sqlexpress' # for a named instance
+    # server = 'myserver,port' # to specify an alternate port
+    # server = '194.94.127.112'
+    # database = 'WordPress'
+    # username = 'ifis1'
+    # password = 'b0QrDr8ShG#e@iMWDwGKlgw3'
 
-    mycursor = mydbconnect.cursor()
+    start_time = time.time()
 
-    mycursor.execute("select * from wp_users")
-
-    result = mycursor.fetchall()
-
-    for i in result:
-        print(i)
+    conn_str = (
+      'Driver={MariaDB 10.3 database server};'
+      'Server=194.94.127.112;'
+      'Database=WordPress;'
+      'username=ifis1;'
+      'password=b0QrDr8ShG#e@iMWDwGKlgw3;'
+      'Trusted_Connection=yes;'
+    )
+    conn = pyodbc.connect(conn_str)
+    # conn = pyodbc.connect('DRIVER={DRIVER={MySQL Server version  5.5.5-10.3.17-MariaDB};SERVER=194.94.127.112;DATABASE=WordPress;UID=ifis1;PWD=b0QrDr8ShG#e@iMWDwGKlgw3')
+    cursor = conn.cursor()
+    # cursor.execute('SELECT * FROM `wp_ifiS_02session` ORDER BY `id` ASC')
+    # for row in cursor.fetchall():
+    #    print(row)
+    sql_query = pd.read_sql_query('SELECT * FROM `wp_ifiS_02session` ORDER BY `id` ASC', conn)
+    # print(sql_query)
+    # print(type(sql_query))
 
 
 def exportDB():
-    mydbconnect = mysql.connector.connect(host="194.94.127.112", user="ifis1",
-                                          passwd="b0QrDr8ShG#e@iMWDwGKlgw3", database="WordPress")
+    start_time = time.time()
+    # Connect to MariaDB Platform
+    try:
+        conn = mariadb.connect(
+            user="ifis1",
+            password="b0QrDr8ShG#e@iMWDwGKlgw3",
+            host="194.94.127.112",
+            port=3306,
+            database="WordPress"
 
-    mycursor = mydbconnect.cursor()
+        )
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB Platform: {e}")
+        sys.exit(1)
 
-    mycursor.execute("SELECT * FROM `wp_ifiS_02session` ORDER BY `id` ASC")
+    # Creating a cursor object using the cursor() method
+    cursor = conn.cursor()
 
-    result = mycursor.fetchall()
+    # Retrieving many rows
 
-    for i in result:
-        print(i)
+    sql = '''SELECT wp_ifiS_02session.session_id AS session_id, 
+              wp_ifiS_02session.ip_address AS ip_address, 
+              wp_ifiS_02session.login_attempt AS login_attempt, 
+              wp_ifiS_02session.attempt_date AS attempt_date, 
+              wp_ifiS_02session.countrycode AS countrycode, 
+              wp_ifiS_02session.state AS state, wp_ifiS_02user_recognition.browser AS browser, 
+              wp_ifiS_02user_recognition.browser_version AS browser_version, 
+              wp_ifiS_02user_recognition.user_agent AS user_agent, 
+              wp_ifiS_02user_recognition.platform AS platform, 
+              wp_ifiS_02user_recognition.login_attempt AS login_attempt, 
+              wp_ifiS_02user_recognition.login_date AS login_date, 
+              wp_ifiS_02user_recognition.logout_date AS logout_date, 
+              wp_ifiS_02user_recognition.duration AS duration, 
+              wp_ifiS_02user_recognition.loginstatus AS loginstatus, 
+              wp_ifiS_02user_recognition.subpage AS subpage
+              FROM wp_ifiS_02session JOIN wp_ifiS_02user_recognition 
+              ON wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id'''
 
+    sql1 = ''' SELECT wp.session_id, wp.ip_address, wp.login_attempt, 
+              wp.countrycode, wp.user_id, wp.state, reco.*
+              FROM ( SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, 
+              ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage
+              FROM wp_ifiS_02user_recognition ur
+              ) reco 
+              INNER JOIN wp_ifiS_02session wp ON wp.user_id = reco.user_id'''
 
-def something(duration=0.000001):
-    """
-    Function that needs some serious benchmarking.
-    """
-    time.sleep(duration)
-    # You may return anything you want, like the result of a computation
-    return 123
+    # Executing the query
+    cursor.execute(sql)
 
+    # Fetching 1st row from the table
+    result = cursor.fetchall();
+    print(type(result))
+    print(result)
 
-def test_my_stuff(benchmark):
-    # benchmark something
-    result = benchmark(something)
+    try:
+        cursor.execute("some MariaDB query")
+    except mariadb.Error as e:
+        print(f"Error: {e}")
 
-    # Extra code, to verify that the run completed correctly.
-    # Sometimes you may want to check the result, fast functions
-    # are no good if they return incorrect results :-)
-    assert result == 123
+    print("--- %s seconds ---" % (time.time() - start_time))
+    # Close Connection
+    conn.close()
 
 
 if __name__ == '__main__':
     import time
     import pymysql
     import mysql.connector
-    from mysql.connector import Error
+    from mysql.connector import Error, cursor
+    import pyodbc
+    import pandas as pd
+    import mariadb
+    import sys
     import sqlparse
 
-    # exportdb()
+    exportDB()
     # exportedDB()
-    exportDBUBAIFIS()
+    # exportDBUBAIFIS()
