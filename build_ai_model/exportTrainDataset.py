@@ -4,6 +4,59 @@
 """
 
 
+def mariadbtest():
+    start_time = time.time()
+    pool = mariadb.ConnectionPool(
+        pool_name='pool1',
+        pool_size=2,
+        pool_reset_connection=False,
+        host='194.94.127.112',
+        user='ifis1',
+        password='b0QrDr8ShG#e@iMWDwGKlgw3',
+        database='WordPress',
+    )
+    try:
+        # These would normally be allocated in separate threads:
+        conn1 = pool.get_connection()
+        conn2 = pool.get_connection()
+        # Attempting to fetch a 4th connection would throw an exception
+        # given the pool_size == 3 option above.
+
+        cursor = conn1.cursor()
+        cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
+                   'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
+
+        result_session = cursor
+
+        cursor = conn2.cursor()
+        cursor.execute('SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+                   'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+                   ' FROM wp_ifiS_02user_recognition ur')
+
+        result_ur = cursor
+
+        df_session = DataFrame(result_session, columns=["session_id", "ip_address", "login_attempt", "countrycode",
+                                                    "user_id", "state"])
+        df_ur = DataFrame(result_ur, columns=["user_id", "browser", "browser_version", "user_agent", "platform",
+                                          "login_attempt", "login_date", "logout_date", "duration",
+                                          "loginstatus", "subpage"])
+
+        merged = pd.merge(df_session, df_ur, how='inner', left_on='user_id', right_on='user_id')
+        frames = [df_session, df_ur]
+
+        result = pd.concat(frames)
+
+        print(merged)
+        print(result)
+        conn1.close()
+        conn2.close()
+
+        print(time.time() - start_time)
+
+    except mariadb.Error as e:
+        print(f"Error:{e}")
+
+
 def exportDBUBAIFIS():
     start_time = time.time()
     connection = mysql.connector.connect(host='194.94.127.112',
@@ -91,12 +144,12 @@ def exportDBUBAIFIS():
 
             result = pd.concat(frames)
 
-            pd.set_option("display.max_rows", None)
-            pd.set_option("display.max_columns", None)
-            pd.set_option("display.width", None)
+            # pd.set_option("display.max_rows", None)
+            # pd.set_option("display.max_columns", None)
+            # pd.set_option("display.width", None)
 
-            # print(merged)
-            print(result)
+            print(merged)
+            # print(result)
             print(len(result_session))
             print(len(result_ur))
             print(time.time() - start_time)
@@ -117,5 +170,7 @@ if __name__ == '__main__':
     import time
     import pandas as pd
     from pandas import DataFrame
+    import mariadb
 
-    exportDBUBAIFIS()
+    # exportDBUBAIFIS()
+    mariadbtest()
