@@ -61,26 +61,19 @@ def mariadbtest():
 
         # encode strings to floats
         ohe = preprocessing.OneHotEncoder()
-        ohe.fit(x_train)
-        x_train_encoded = ohe.transform(x_train).toarray()
 
-        ohe.fit(x_test)
-        x_test_encoded = ohe.transform(x_test).toarray()
+        x_train_encoded = ohe.fit_transform(x_train).toarray()
 
-        '''# rescale data
-        scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
-        rescaledX_train = scaler.fit_transform(x_train_encoded)
-        rescaledX_test = scaler.fit_transform(x_test_encoded)'''
+        #print(ohe.categories_)
 
-        print(type(x_train_encoded))
-        np.savetxt("rescaledX_train.csv", x_test_encoded[0:1000, 0:16], delimiter=",")
+        x_test_encoded = ohe.fit_transform(x_test).toarray()
 
-        '''s = pd.Series(x_train)
-        y_train_onehot = pd.get_dummies(s)'''
+        print(len(x_train_encoded))
+        '''np.savetxt("rescaledX_train.csv", x_test_encoded[0:1000, 0:16], delimiter=",")'''
 
-        
+        # inverse = ohe.inverse_transform(x_test_encoded)
 
-        #print(converted)
+        # print(inverse)
 
         print(time.time() - start_time)
 
@@ -194,6 +187,15 @@ def exportDBUBAIFIS():
             print("MySQL connection is closed")
 
 
+def build_model(optimizer):
+    model = Sequential()
+    model.add(Dense(output_dim=6, init='uniform', activation='relu', input_dim=11)) #input_dim = number of input variables
+    model.add(Dense(output_dim=6, init='uniform', activation='relu'))
+    model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
+    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+    return model
+
+
 if __name__ == '__main__':
     import pymysql
     import mysql.connector
@@ -205,6 +207,15 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     import numpy as np
     import mariadb
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
+    from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+    from sklearn.metrics import confusion_matrix
+    from keras.models import Sequential
+    from keras.layers import Dense
+    from keras.wrappers.scikit_learn import KerasClassifier
 
     # exportDBUBAIFIS()
     mariadbtest()
