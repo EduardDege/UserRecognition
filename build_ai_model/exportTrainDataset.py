@@ -3,7 +3,6 @@
  The User can be blocker, if the Machine Learning Algo evaluate the use ask risk
 """
 
-
 def mariadbtest():
     start_time = time.time()
     pool = mariadb.ConnectionPool(
@@ -44,12 +43,44 @@ def mariadbtest():
         merged = pd.merge(df_session, df_ur, how='inner', left_on='user_id', right_on='user_id')
         frames = [df_session, df_ur]
 
-        result = pd.concat(frames)
+        concat = pd.concat(frames)
 
-        print(merged)
-        print(result)
+        merged = merged.dropna()
+
+        print(len(merged))
+
+        train, test = train_test_split(merged, test_size=0.2)
+
+        print(len(train))
+        print(len(test))
         conn1.close()
         conn2.close()
+
+        x_train = train.values
+        x_test = test.values
+
+        # encode strings to floats
+        ohe = preprocessing.OneHotEncoder()
+        ohe.fit(x_train)
+        x_train_encoded = ohe.transform(x_train).toarray()
+
+        ohe.fit(x_test)
+        x_test_encoded = ohe.transform(x_test).toarray()
+
+        '''# rescale data
+        scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
+        rescaledX_train = scaler.fit_transform(x_train_encoded)
+        rescaledX_test = scaler.fit_transform(x_test_encoded)'''
+
+        print(type(x_train_encoded))
+        np.savetxt("rescaledX_train.csv", x_test_encoded[0:1000, 0:16], delimiter=",")
+
+        '''s = pd.Series(x_train)
+        y_train_onehot = pd.get_dummies(s)'''
+
+        
+
+        #print(converted)
 
         print(time.time() - start_time)
 
@@ -170,6 +201,9 @@ if __name__ == '__main__':
     import time
     import pandas as pd
     from pandas import DataFrame
+    from sklearn import preprocessing
+    from sklearn.model_selection import train_test_split
+    import numpy as np
     import mariadb
 
     # exportDBUBAIFIS()
