@@ -3,8 +3,9 @@
  The User can be blocker, if the Machine Learning Algo evaluate the use ask risk
 """
 
-def mariadbtest():
-    start_time = time.time()
+
+def dataImport():
+
     pool = mariadb.ConnectionPool(
         pool_name='pool1',
         pool_size=2,
@@ -23,22 +24,25 @@ def mariadbtest():
 
         cursor = conn1.cursor()
         cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
-                   'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
+                       'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
 
         result_session = cursor
 
         cursor = conn2.cursor()
         cursor.execute('SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-                   'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
-                   ' FROM wp_ifiS_02user_recognition ur')
+                       'ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+                       ' FROM wp_ifiS_02user_recognition ur')
 
         result_ur = cursor
 
         df_session = DataFrame(result_session, columns=["session_id", "ip_address", "login_attempt", "countrycode",
-                                                    "user_id", "state"])
+                                                        "user_id", "state"])
         df_ur = DataFrame(result_ur, columns=["user_id", "browser", "browser_version", "user_agent", "platform",
-                                          "login_attempt", "login_date", "logout_date", "duration",
-                                          "loginstatus", "subpage"])
+                                              "login_date", "logout_date", "duration",
+                                              "loginstatus", "subpage"])
+
+        conn1.close()
+        conn2.close()
 
         merged = pd.merge(df_session, df_ur, how='inner', left_on='user_id', right_on='user_id')
         frames = [df_session, df_ur]
@@ -47,39 +51,79 @@ def mariadbtest():
 
         merged = merged.dropna()
 
-        print(len(merged))
+        # pd.set_option('display.max_columns', None)
 
-        train, test = train_test_split(merged, test_size=0.2)
+        # print(merged)
 
-        print(len(train))
-        print(len(test))
-        conn1.close()
-        conn2.close()
 
-        x_train = train.values
-        x_test = test.values
 
-        # encode strings to floats
-        ohe = preprocessing.OneHotEncoder()
+        '''np.savetxt("data.csv", data, delimiter=",")'''
 
-        x_train_encoded = ohe.fit_transform(x_train).toarray()
 
-        #print(ohe.categories_)
-
-        x_test_encoded = ohe.fit_transform(x_test).toarray()
-
-        print(len(x_train_encoded))
-        '''np.savetxt("rescaledX_train.csv", x_test_encoded[0:1000, 0:16], delimiter=",")'''
-
-        # inverse = ohe.inverse_transform(x_test_encoded)
-
-        # print(inverse)
-
-        print(time.time() - start_time)
+        return merged
 
     except mariadb.Error as e:
         print(f"Error:{e}")
 
+
+def prepareData():
+    start_time = time.time()
+    merged = dataImport()
+
+    cat_cols = ["browser", "browser_version", "user_agent", "platform",
+                "login_attempt", "login_date", "logout_date", "duration",
+                "loginstatus", "subpage", "session_id", "ip_address", "countrycode",
+                "user_id", "state"]
+
+    for var in cat_cols:
+        number = preprocessing.LabelEncoder()
+        merged[var] = number.fit_transform(merged[var].astype('str'))
+
+    # print(type(merged))
+    '''np.savetxt("data2.csv", merged, delimiter=",")'''
+
+    df_values = merged.values
+
+    min_max_scaler = preprocessing.MinMaxScaler()
+    merged_scaled = min_max_scaler.fit_transform(df_values)
+    data = pd.DataFrame(merged_scaled)
+    '''np.savetxt("data3.csv", data, delimiter=",")'''
+    x_data, y_data = np.array_split(data, 2)
+
+    '''print(x_data)
+    print(y_data)'''
+
+    if len(x_data) != len(y_data):
+        #X_train.drop(X_train.tail(1).index, inplace = True)
+        x_data = x_data.head(-1)
+
+    X_train, X_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.3, random_state=42)
+
+    ohe = preprocessing.OneHotEncoder(handle_unknown="ignore")
+
+    print(time.time() - start_time)
+
+    return X_train, X_test, y_train, y_test
+
+def modelBuilding():
+    # 0 = X_train, 1 = X_test, 2 = y_train, 3 = y_test
+    data = prepareData()
+    # modelbuilding with random forest
+    '''random.seed(42)
+    rf = RandomForestRegressor(n_estimators=10)
+    rf.fit(X_train, y_train)'''
+
+    # modelbuilding using keras
+    # 15 input neurons, 100 hidden layer1 neurons, 50 hidden layer2 neurons, 15 output neuron
+    model = Sequential()
+    model.add(Dense(100, input_dim=15, activation="relu"))
+    model.add(Dense(50, activation="relu"))
+    model.add(Dense(15))
+    model.summary()
+
+    model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mean_squared_error"])
+
+    model.fit(data[0], data[2], epochs=10)
 
 def exportDBUBAIFIS():
     start_time = time.time()
@@ -187,14 +231,6 @@ def exportDBUBAIFIS():
             print("MySQL connection is closed")
 
 
-def build_model(optimizer):
-    model = Sequential()
-    model.add(Dense(output_dim=6, init='uniform', activation='relu', input_dim=11)) #input_dim = number of input variables
-    model.add(Dense(output_dim=6, init='uniform', activation='relu'))
-    model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
-    return model
-
 
 if __name__ == '__main__':
     import pymysql
@@ -207,15 +243,13 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     import numpy as np
     import mariadb
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
-    from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-    from sklearn.metrics import confusion_matrix
+    from sklearn.neighbors import KNeighborsClassifier
+    import random
+    from sklearn.ensemble import RandomForestRegressor
+    import warnings
+    warnings.filterwarnings("ignore", category=FutureWarning)
     from keras.models import Sequential
     from keras.layers import Dense
-    from keras.wrappers.scikit_learn import KerasClassifier
+    from keras.utils import to_categorical
 
-    # exportDBUBAIFIS()
-    mariadbtest()
+    modelBuilding()
