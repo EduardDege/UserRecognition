@@ -2,14 +2,47 @@
 # This file is distributed under the same license as the Plugins - Contact Form by WPForms &#8211; Drag &amp; Drop Form Builder for WordPress - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2020-06-04 08:34:13+0000\n"
+"PO-Revision-Date: 2020-07-30 15:39:33+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: GlotPress/3.0.0-alpha\n"
+"X-Generator: GlotPress/3.0.0-alpha.2\n"
 "Language: de\n"
 "Project-Id-Version: Plugins - Contact Form by WPForms &#8211; Drag &amp; Drop Form Builder for WordPress - Stable (latest release)\n"
+
+#: src/Lite/Admin/Builder/Education.php:495
+msgid "Authorize.Net"
+msgstr "Authorize.Net"
+
+#. translators: %d - field ID.
+#: includes/admin/builder/functions.php:216
+msgid "Field #%d"
+msgstr "Feld #%d"
+
+#: src/Integrations/UsageTracking/UsageTracking.php:92
+msgid "Allow Usage Tracking"
+msgstr "Nutzungsnachverfolgung erlauben"
+
+#: includes/admin/class-welcome.php:270
+msgid "File Uploads"
+msgstr "Datei-Uploads"
+
+#: includes/admin/class-welcome.php:263
+msgid "Advanced Fields"
+msgstr "Erweiterte Felder"
+
+#: includes/admin/class-tools.php:102 includes/admin/class-tools.php:106
+msgid "Scheduled Actions"
+msgstr "Geplante Aktionen"
+
+#: includes/fields/class-select.php:614
+msgid "No results found."
+msgstr "Keine Ergebnisse gefunden."
+
+#: includes/fields/class-select.php:268
+msgid "Style"
+msgstr "Design"
 
 #: includes/functions.php:913
 msgid "North Macedonia (Republic of)"
@@ -5252,10 +5285,6 @@ msgstr "Bereits gekauft?"
 msgid "Automatically scroll to the confirmation message"
 msgstr "Bestätigungs-Nachricht automatisch scrollen"
 
-#. Description of the plugin
-msgid "Beginner friendly WordPress contact form plugin. Use our Drag & Drop form builder to create your WordPress forms."
-msgstr "Einsteigerfreundliches WordPress-Kontaktformular-Plugin. Benutze unseren Drag-and-drop-Formular-Builder, um deine WordPress-Formulare zu erstellen."
-
 #: src/Lite/Admin/Builder/Education.php:149
 msgid "Billing / Order Form"
 msgstr "Rechnungs-/Bestellformular"
@@ -5713,11 +5742,6 @@ msgstr "Sub-Label verbergen"
 #: src/Lite/Admin/Builder/Education.php:276
 msgid "HTML"
 msgstr "HTML"
-
-#. Plugin URI of the plugin
-#. Author URI of the plugin
-msgid "https://wpforms.com"
-msgstr "https://wpforms.com"
 
 #: includes/fields/class-gdpr-checkbox.php:24
 msgid "I consent to having this website store my submitted information so they can respond to my inquiry."
@@ -6321,10 +6345,6 @@ msgstr "WPForms-Aufgabe"
 #: includes/class-process.php:269
 msgid "WPForms honeypot field triggered."
 msgstr "WPForms-Honeypot-Feld ausgelöst."
-
-#. Plugin Name of the plugin
-msgid "WPForms Lite"
-msgstr "WPForms Lite"
 
 #: src/Admin/Challenge.php:640
 msgid "Yes, I give WPForms permission to contact me for any follow up questions."

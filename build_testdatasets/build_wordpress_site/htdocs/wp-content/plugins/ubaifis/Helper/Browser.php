@@ -53,6 +53,7 @@ class Browser
     const BROWSER_UNKNOWN = 'unknown';
     const VERSION_UNKNOWN = 'unknown';
 
+    const BROWSER_EDGE = "MS Edge";
     const BROWSER_OPERA = 'Opera'; // http://www.opera.com/
     const BROWSER_OPERA_MINI = 'Opera Mini'; // http://www.opera.com/mini/
     const BROWSER_WEBTV = 'WebTV'; // http://www.webtv.net/pc/
@@ -616,6 +617,19 @@ class Browser
                 $aversion = explode('/', $this->_agent);
                 $this->setVersion($aversion[1]);
             }
+            return true;
+        }
+        else if (stripos($this->_agent, 'Edg') !== false){
+            $resultant = stristr($this->_agent, 'Edg');
+            if (preg_match('/\//', $resultant)) {
+                $aresult = explode('/', str_replace("(", " ", $resultant));
+                $aversion = explode(' ', $aresult[1]);
+                $this->setVersion($aversion[0]);
+            }
+            if (stripos($this->_agent, 'Mobile') !== false) {
+                $this->setMobile(true);
+            }
+            $this->_browser_name = self::BROWSER_EDGE;
             return true;
         }
         return false;

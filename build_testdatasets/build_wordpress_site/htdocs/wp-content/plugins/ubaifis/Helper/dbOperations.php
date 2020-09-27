@@ -25,10 +25,47 @@ function createNewTable($wpdb, $table) {
 
 }
 
+function createSessionDataTable($wpdb){
+    $table_name = $wpdb->prefix . "session_data";
+    $sql = "CREATE TABLE $table_name (
+        id int NOT NULL AUTO_INCREMENT,
+        session_id text NOT NULL,
+        ip_address varchar(15) NOT NULL,
+        session_date DATETIME,
+        countrycode varchar(2) NOT NULL,
+        state text NOT NULL,
+        user_agent text NOT NULL,
+        platform text NOT NULL,
+        browser text NOT NULL,
+        browser_version text NOT NULL,
+        subpage text NOT NULL,
+        PRIMARY KEY (id)
+    )";
+
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql );
+}
+
+function createUserLoginDataTable($wpdb){
+    $table_name = $wpdb->prefix . "user_login_data";
+    $sql = "CREATE TABLE $table_name (
+        id int NOT NULL AUTO_INCREMENT,
+        session_id text NOT NULL,
+        user_id int NOT NULL,
+        login_attempt int DEFAULT 0,
+        login_attempt_date DATETIME,
+        logout_date DATETIME,
+        duration int DEFAULT 0,
+        PRIMARY KEY (id)
+    )";
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql );
+}
+
 function createSessionTable($wpdb){
 	$table_name = $wpdb->prefix . "session";
 	$sql = "CREATE TABLE $table_name (
-	  id mediumint(9) NOT NULL AUTO_INCREMENT,
+	    id mediumint(9) NOT NULL AUTO_INCREMENT,
 		session_id text NOT NULL,
 		user_id mediumint(9) NOT NULL,
 		ip_address text NOT NULL,
@@ -43,6 +80,29 @@ function createSessionTable($wpdb){
 	dbDelta( $sql );
 }
 
+function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $device){
+
+    $table_name = $wpdb->prefix . "session_data";
+
+    $wpdb->insert(
+        $table_name,
+        array(
+            'session_id' => $session_id,
+            'ip_address' => $_SERVER['REMOTE_ADDR'],
+            'session_date' => date('Y-m-d H:i:s'),
+            'countrycode' => $countrycode,
+            'state' => $state,
+            'user_agent' => $device[user_agent],
+            'platform' => $device[platform],
+            'browser' => $device[browser],
+            'browser_version' => $device[browser_version],
+            'subpage' => $_SERVER["REQUEST_URI"],
+
+        )
+    );
+
+}
+
 function insertToSessionTable($wpdb, $session_id, $countrycode, $state){
 
 $table_name = $wpdb->prefix . "session";
@@ -55,6 +115,7 @@ $wpdb->insert(
 		'ip_address' => $_SERVER['REMOTE_ADDR'],
 		'countrycode' => $countrycode,
 		'state' => $state,
+		'attempt_date' => date('Y-m-d H:i:s'),
 	)
 );
 }

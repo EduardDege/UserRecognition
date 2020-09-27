@@ -10,6 +10,8 @@ Author URI:
 License: GPL2
 */
 
+
+
 define("ABS_PATH", dirname(__FILE__));
 
 include (ABS_PATH . "/Helper/getDeviceInfo.php");
@@ -18,14 +20,24 @@ include (ABS_PATH . "/Helper/loginOperations.php");
 include (ABS_PATH . "/Helper/cookie.php");
 include (ABS_PATH . "/Helper/ip_range.php");
 
+/*function wpb_confirm_leaving_js() {
+
+     wp_enqueue_script( 'Confirm Leaving', plugins_url( 'Helper/javascript/confirm-leaving.js', __FILE__ ), array('jquery'), '1.0.0', true );
+}
+add_action('wp_enqueue_scripts', 'wpb_confirm_leaving_js');*/
+
+
 add_action("init", "set_cookie");
 add_action("init", "start_session");
 add_action('admin_menu', 'test_plugin_setup_menu');
 add_action('wp_login_failed', 'checkUser');
 add_action('wp_login', "addUserToSessionSuccLogin");
 add_action('wp_login', 'saveLastLogin');
-
+add_action('wp_login', 'saveLoginToUserLoginData');
+add_action('wp_head', 'onTabClosed');
+add_action('clear_auth_cookie', "saveLogoutToUserLoginData");
 add_action('wp_logout', "getLogout");
+
 // create custom plugin settings menu
 add_action('admin_menu', 'ubaifis_create_menu');
 // hook trace user
@@ -75,6 +87,8 @@ function ubaifis_settings_page(){
   createSessionTable($wpdb);
   insertToDB($wpdb, $table, getDevice(), $user_id);
   show_cookie();
+  createSessionDataTable($wpdb);
+  createUserLoginDataTable($wpdb);
 
   #$ip = $_SE%RVER['REMOTE_ADDR'];
   #echo $ip;
