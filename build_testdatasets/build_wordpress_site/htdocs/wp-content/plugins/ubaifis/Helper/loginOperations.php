@@ -72,7 +72,7 @@ include "/dbOperations.php";
 
   function saveLastLogin(){
     global $wpdb;
-    $push_array = array_merge(getDevice(), array("user_id" => get_current_user_id(),
+    $push_array = array_merge(getDevice(), array("user_id" => wp_get_current_user()->ID,
         "login_date" => date('Y-m-d H:i:s'), "loginstatus" => true));
     $wpdb->insert("{$wpdb->prefix}user_recognition", $push_array);
 
@@ -80,7 +80,7 @@ include "/dbOperations.php";
 
   function getLogout($user_id){
     global $wpdb;
-    $user_id = get_current_user_id();
+    $user_id = wp_get_current_user()->ID;
     # echo $user_id;
     $login_date = $wpdb->get_var("SELECT login_date FROM {$wpdb->prefix}user_recognition WHERE user_id = $user_id AND loginstatus = 1");
     $wpdb->update("{$wpdb->prefix}user_recognition",
@@ -141,7 +141,7 @@ include "/dbOperations.php";
 
   function onTabClosed(){
     global $wpdb;
-    $user_id = get_current_user_id();
+    $user_id = wp_get_current_user()->ID;
     echo "<script>
     window.onbeforeunload = function(){
     alert('Hello');
@@ -173,7 +173,7 @@ include "/dbOperations.php";
 
   function addUserToSessionFailedLogin($wpdb, $id){
     $session_id = session_id();
-    $user_id = get_current_user_id();
+    $user_id = wp_get_current_user()->ID;
     $login_attempt = $wpdb->get_var("SELECT MAX(login_attempt) FROM {$wpdb->prefix}session WHERE user_id=$id AND attempt_date=(SELECT Max(attempt_date) FROM {$wpdb->prefix}session WHERE user_id=$id)");
     //$wpdb->update("{$wpdb->prefix}session", array("login_attempt"=>(int)$login_attempt + 1, "user_id" => $id), array("session_id"=>$session_id));
     $wpdb->insert("{$wpdb->prefix}session", array("session_id" => $session_id, "user_id" =>$id,
