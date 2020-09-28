@@ -25,7 +25,19 @@ include (ABS_PATH . "/Helper/ip_range.php");
      wp_enqueue_script( 'Confirm Leaving', plugins_url( 'Helper/javascript/confirm-leaving.js', __FILE__ ), array('jquery'), '1.0.0', true );
 }
 add_action('wp_enqueue_scripts', 'wpb_confirm_leaving_js');*/
+add_filter( 'authenticate', 'custom_authenticate_username_password', 30, 3);
+function custom_authenticate_username_password( $user, $username, $password )
+{
+    if ( is_a($user, 'WP_User') ) { return $user; }
 
+    if ( empty($username) || empty($password) )
+    {
+        $error = new WP_Error();
+        $user  = new WP_Error('authentication_failed', __('<strong>ERROR</strong>: Invalid username or incorrect password.'));
+
+        return $error;
+    }
+}
 
 add_action("init", "set_cookie");
 add_action("init", "start_session");

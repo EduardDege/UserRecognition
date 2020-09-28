@@ -32,18 +32,33 @@ include "/dbOperations.php";
 
     foreach($results as $session){
 
-        if($session->session_id == $session_id){
+        if($session->session_id == $session_id ){
         $session_exist = true;
-        echo "im here";
+
         }
     }
     if($session_exist){
-        echo $session_id;
-        echo $id;
-        $login_attempt = $wpdb->get_var("SELECT `wp_user_login_data`.`login_attempt` FROM `wp_user_login_data`
-        WHERE `wp_user_login_data`.`session_id` = \"$session_id\" AND `wp_user_login_data`.`user_id`= \"$id\"");
-        echo $login_attempt;
-        $wpdb->update("{$wpdb->prefix}user_login_data", array("login_attempt"=>(int)$login_attempt + 1), array("user_id"=>$id, "session_id" => $session_id));
+
+        $user_id = $wpdb->get_var("SELECT `wp_user_login_data`.`user_id` FROM `wp_user_login_data`
+        WHERE `wp_user_login_data`.`session_id` = \"$session_id\"");
+
+
+
+        if($id == $user_id){
+            $login_attempt = $wpdb->get_var("SELECT `wp_user_login_data`.`login_attempt` FROM `wp_user_login_data`
+             WHERE `wp_user_login_data`.`session_id` = \"$session_id\" AND `wp_user_login_data`.`user_id`= \"$id\"");
+
+             $wpdb->update("{$wpdb->prefix}user_login_data", array("login_attempt"=>(int)$login_attempt + 1), array("user_id"=>$id, "session_id" => $session_id));
+        }else{
+            $push_array = array("session_id" => $session_id,
+                  "user_id" => $id,
+                  "login_attempt"=> 1,
+                  "login_attempt_date" => date('Y-m-d H:i:s'),
+                  );
+        $wpdb->insert($wpdb->prefix . "user_login_data", $push_array);
+
+        }
+
     }else{
     # echo "here2";
         $push_array = array("session_id" => $session_id,
@@ -81,7 +96,8 @@ include "/dbOperations.php";
     $user_id = wp_get_current_user()->ID;
     $session_id = session_id();
 
-    $login_date = $wpdb->get_var("SELECT login_attempt_date FROM {$wpdb->prefix}user_login_data WHERE user_id = $user_id");
+    $login_date = $wpdb->get_var("SELECT `wp_user_login_data`.`login_attempt_date` FROM `wp_user_login_data`
+        WHERE `wp_user_login_data`.`session_id` = \"$session_id\" AND `wp_user_login_data`.`user_id`= \"$user_id\"");
     $session = $wpdb->get_var("SELECT session_id FROM {$wpdb->prefix}user_login_data WHERE user_id = $user_id AND session_id = $session_id");
 
     $wpdb->update($wpdb->prefix . "user_login_data", array("logout_date" => date('Y-m-d H:i:s'), "duration" => strtotime(date('Y-m-d H:i:s')) - strtotime($login_date)),
@@ -93,15 +109,16 @@ include "/dbOperations.php";
     global $wpdb;
     $user_id = 0;
     $session_exist = false;
+    $session_id = session_id();
     $results = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}user_login_data");
     foreach($results as $session){
 
         if($session->session_id == $session_id){
         $session_exist = true;
-        echo "im here";
+
         }
     }
-    if(true){
+    if($session_exist){
 
     }else{
     $results = $wpdb->get_results("SELECT user_login, ID FROM {$wpdb->prefix}users");
@@ -147,8 +164,8 @@ include "/dbOperations.php";
       insertToSessionDataTable(
         $wpdb,
         session_id(),
-        ip_info("2.57.168.0","countrycode"),
-        ip_info("2.57.168.0", "state"),
+        ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        ip_info($_SERVER['REMOTE_ADDR'], "state"),
         getDevice()
         );
     }
@@ -162,8 +179,8 @@ include "/dbOperations.php";
     $wpdb->insert("{$wpdb->prefix}session", array("session_id" => $session_id, "user_id" =>$id,
      "login_attempt"=>(int)$login_attempt + 1, "attempt_date" => date('Y-m-d H:i:s'),
         "ip_address"=>$_SERVER["REMOTE_ADDR"],
-        "countrycode" => ip_info("2.57.168.0","countrycode"),
-        "state"=>ip_info("2.57.168.0", "state")
+        "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
       ));
   }
 
@@ -179,8 +196,8 @@ include "/dbOperations.php";
     $session_id = session_id();
     $push_array = array("user_id" => $user_id, "session_id" => $session_id, "login_attempt" => 0,
         "attempt_date" => date('Y-m-d H:i:s'),"ip_address"=>$_SERVER["REMOTE_ADDR"],
-        "countrycode" => ip_info("2.57.168.1","countrycode"),
-        "state"=>ip_info("2.57.168.0", "state")
+        "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
       );
     $wpdb->insert("{$wpdb->prefix}session", $push_array);
   }
