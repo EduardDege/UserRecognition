@@ -26,7 +26,7 @@ function createNewTable($wpdb, $table) {
 }
 
 function createSessionDataTable($wpdb){
-    $table_name = $wpdb->prefix . "session_data";
+    $table_name = $wpdb->prefix . "session_logs";
     $sql = "CREATE TABLE $table_name (
         id int NOT NULL AUTO_INCREMENT,
         session_id text NOT NULL,
@@ -44,6 +44,24 @@ function createSessionDataTable($wpdb){
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql );
+}
+
+function createUserMovementTable($wpdb){
+	$table_name = $wpdb->prefix . "usermovement";
+	$sql = "CREATE TABLE $table_name(
+		id int NOT NULL AUTO_INCREMENT,
+		session_id text NOT NULL,
+		type text,
+		button text,
+		click_positions text,
+		start_movement text,
+		end_movement text,
+		subpage text NOT NULL,
+		PRIMARY KEY(id)
+	)";
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql );
+
 }
 
 function createUserLoginDataTable($wpdb){
@@ -84,6 +102,8 @@ function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $dev
 
     $table_name = $wpdb->prefix . "session_data";
 
+
+
     $wpdb->insert(
         $table_name,
         array(
@@ -100,6 +120,25 @@ function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $dev
 
         )
     );
+
+}
+
+function insertToUserMovementTable($wpdb, $session_id, $type, $button, $clickPositions, $coordinateX, $coordinateY, $subpage){
+
+	$table_name = $wpdb->prefix . "usermovement";
+
+	$wpdb->insert(
+		$table_name,
+		array(
+				'session_id' => $session_id,
+				'type' => $type,
+				'button' => $button,
+				'click_positions' => $clickPositions,
+				'start_movement' => $coordinateX,
+				'end_movement' => $coordinateY,
+				'subpage'=> $subpage,
+		)
+	);
 
 }
 

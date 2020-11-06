@@ -45,7 +45,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    ports: 
+    ports:
       - ${MAILHOG_SMTP_PORT}:1025 # smtp server
       - ${MAILHOG_WEB_PORT}:8025 # web ui
     networks:
