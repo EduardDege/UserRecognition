@@ -1,7 +1,7 @@
 <?php
 
 function createNewTable($wpdb, $table) {
-	//echo $table;
+	#echo $table;
 	$table_name = $wpdb->prefix . "user_recognition";
 	$sql = "CREATE TABLE $table_name (
 		id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -17,6 +17,7 @@ function createNewTable($wpdb, $table) {
 		duration text NOT NULL,
 		loginstatus text NOT NULL,
 		subpage text NOT NULL,
+		spend_time_on_subpage mediumint NOT NULL AUTO_INCREMENT,
 		PRIMARY KEY  (id)
 	)";
 
@@ -39,6 +40,9 @@ function createSessionDataTable($wpdb){
         browser text NOT NULL,
         browser_version text NOT NULL,
         subpage text NOT NULL,
+				ip_blacklisten text NOT NULL,
+				download_link text NOT NULL,
+				time_spent int NOT NULL,
         PRIMARY KEY (id)
     )";
 
@@ -98,11 +102,9 @@ function createSessionTable($wpdb){
 	dbDelta( $sql );
 }
 
-function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $device){
+function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $device, $blacklist, $download_link, $time_spent){
 
-    $table_name = $wpdb->prefix . "session_data";
-
-
+    $table_name = $wpdb->prefix . "session_logs";
 
     $wpdb->insert(
         $table_name,
@@ -110,14 +112,16 @@ function insertToSessionDataTable($wpdb, $session_id, $countrycode, $state, $dev
             'session_id' => $session_id,
             'ip_address' => $_SERVER['REMOTE_ADDR'],
             'session_date' => date('Y-m-d H:i:s'),
-            'countrycode' => $countrycode,
-            'state' => $state,
-            'user_agent' => $device[user_agent],
-            'platform' => $device[platform],
-            'browser' => $device[browser],
-            'browser_version' => $device[browser_version],
+						#'countrycode' => $countrycode,
+						#'state' => $state,
+            'user_agent' => $device["user_agent"],
+            'platform' => $device["platform"],
+            'browser' => $device["browser"],
+            'browser_version' => $device["browser_version"],
             'subpage' => $_SERVER["REQUEST_URI"],
-
+						'ip_blacklisten' => $blacklist,
+						'download_link' => $download_link,
+						'time_spent' => $time_spent
         )
     );
 

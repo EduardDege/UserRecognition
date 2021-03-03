@@ -4,7 +4,7 @@ include "/getDeviceInfo.php";
 //include $_SERVER['DOCUMENT_ROOT']."/getDeviceInfo.php";
 include "/ip_range.php";
 include "/dbOperations.php";
-
+include "/ckeckBlacklist.php";
 
 
   function checkUser($username){
@@ -163,20 +163,27 @@ include "/dbOperations.php";
     global $wpdb;
 
       if(!session_id()){
-
         session_start();
-        echo "just before session";
         $session_id = session_id();
-        echo $session_id;
-        insertToSessionDataTable(
-          $wpdb,
-          $session_id,
-          ip_info("37.201.194.64","countrycode"),
-          ip_info("37.201.194.64", "state"),
-          getDevice()
-          );
+
       }
 
+  }
+
+  function start_session2($id){
+    global $wpdb;
+
+      $session_id = session_id();
+      insertToSessionDataTable(
+        $wpdb,
+        $session_id,
+        ip_info($_SERVER['REMOTE_ADDR'], "countrycode"),
+        ip_info($_SERVER['REMOTE_ADDR'], "state"),
+        getDevice(),
+        dnsblLookup($_SERVER['REMOTE_ADDR']),
+        "-",
+        0
+        );
   }
 
   function addUserToSessionFailedLogin($wpdb, $id){
@@ -186,9 +193,9 @@ include "/dbOperations.php";
     //$wpdb->update("{$wpdb->prefix}session", array("login_attempt"=>(int)$login_attempt + 1, "user_id" => $id), array("session_id"=>$session_id));
     $wpdb->insert("{$wpdb->prefix}session", array("session_id" => $session_id, "user_id" =>$id,
      "login_attempt"=>(int)$login_attempt + 1, "attempt_date" => date('Y-m-d H:i:s'),
-        "ip_address"=>"192.168.0.175",
-        "countrycode" => ip_info("192.168.0.175","countrycode"),
-        "state"=>ip_info("192.168.0.175", "state")
+        "ip_address"=>$_SERVER['REMOTE_ADDR'],
+        "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
       ));
   }
 
@@ -204,8 +211,8 @@ include "/dbOperations.php";
     $session_id = session_id();
     $push_array = array("user_id" => $user_id, "session_id" => $session_id, "login_attempt" => 0,
         "attempt_date" => date('Y-m-d H:i:s'),"ip_address"=>"192.168.0.175",
-        "countrycode" => ip_info("192.168.0.175","countrycode"),
-        "state"=>ip_info("192.168.0.175", "state")
+        "countrycode" => ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        "state"=>ip_info($_SERVER['REMOTE_ADDR'], "state")
       );
     $wpdb->insert("{$wpdb->prefix}session", $push_array);
   }

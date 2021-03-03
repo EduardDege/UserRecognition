@@ -20,6 +20,7 @@ include (ABS_PATH . "/Helper/dbOperations.php");
 include (ABS_PATH . "/Helper/loginOperations.php");
 include (ABS_PATH . "/Helper/cookie.php");
 include (ABS_PATH . "/Helper/ip_range.php");
+include (ABS_PATH . "/Helper/checkBlacklist.php");
 
 /*function wpb_confirm_leaving_js() {
 
@@ -46,6 +47,30 @@ add_action("wp_ajax_mouse_action", "mouse_action");
 add_action("wp_ajax_nopriv_mouse_action", "mouse_action");
 add_action("wp_ajax_tap_action", "tap_action");
 add_action("wp_ajax_nopriv_tap_action", "tap_action");
+add_action("wp_ajax_download_action", "download_action");
+add_action("wp_ajax_nopriv_download_action", "download_action");
+add_action("wp_ajax_timer_action", "timer_action");
+add_action("wp_ajax_nopriv_timer_action", "timer_action");
+
+function my_time_tracker_enqueuer(){
+  $localize = array(
+      'ajaxurl' => admin_url( 'admin-ajax.php' ),
+      'session_id' => session_id()
+  );
+  wp_register_script("my_time_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/time-tracker.js", array('jquery'), '1.0.9', true);
+  wp_enqueue_script("my_time_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/time-tracker.js", array("jquery"));
+  wp_localize_script("my_time_tracker", "myAjax", $localize);
+}
+
+function my_download_tracker_enqueuer(){
+  $localize = array(
+      'ajaxurl' => admin_url( 'admin-ajax.php' ),
+      'session_id' => session_id()
+  );
+  wp_register_script("my_download_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/download-tracker.js", array('jquery'), '1.0.4', true);
+  wp_enqueue_script("my_download_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/download-tracker.js", array("jquery"));
+  wp_localize_script("my_download_tracker", "myAjax", $localize);
+}
 
 function my_mouse_script_enqueuer(){
 
@@ -53,7 +78,7 @@ function my_mouse_script_enqueuer(){
       'ajaxurl' => admin_url( 'admin-ajax.php' ),
       'session_id' => session_id()
   );
-
+  wp_register_script("my_mouse_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/track-mouse.js", array('jquery'), '1.0.1', true);
   wp_enqueue_script("my_mouse_tracker", plugin_dir_url(__FILE__). "/Helper/javascript/track-mouse.js", array("jquery"));
   wp_localize_script("my_mouse_tracker", "myAjax", $localize);
 
@@ -61,7 +86,6 @@ function my_mouse_script_enqueuer(){
 }
 
 function my_smartphone_script_enqueuer(){
-  echo session_id();
   $localize = array(
       'ajaxurl' => admin_url( 'admin-ajax.php' ),
       'session_id' => session_id()
@@ -91,7 +115,7 @@ function custom_authenticate_username_password( $user, $username, $password )
 
 
 #add_action("init", "set_cookie");
-
+add_action("wp_head", "start_session2");
 add_action('admin_menu', 'test_plugin_setup_menu');
 add_action('wp_login_failed', 'checkUser');
 add_action('wp_login', "addUserToSessionSuccLogin");
@@ -101,12 +125,12 @@ add_action('wp_head', 'onTabClosed');
 add_action('clear_auth_cookie', "saveLogoutToUserLoginData");
 add_action('wp_logout', "getLogout");
 if(wp_is_mobile()){
-  echo "hello";
-  echo 2;
   add_action( 'wp_enqueue_scripts', 'my_smartphone_script_enqueuer' );
 }else{
   add_action( 'wp_enqueue_scripts', 'my_mouse_script_enqueuer' );
 }
+add_action("wp_enqueue_scripts", "my_download_tracker_enqueuer");
+add_action("wp_enqueue_scripts", "my_time_tracker_enqueuer");
 // create custom plugin settings menu
 add_action('admin_menu', 'ubaifis_create_menu');
 // hook trace user
@@ -177,6 +201,7 @@ function ubaifis_settings_page(){
   #$ip = $_SE%RVER['REMOTE_ADDR'];
   #echo $ip;
   #echo ip_info("108.171.134.41", "Country");
+  #dnsblLookup("216.145.14.142");
 ?>
 <div class="wrap">
     <h1>UBAifis</h1>
@@ -227,7 +252,26 @@ function ubaifis_settings_page(){
 <?php
 }
 
+function download_action(){
+  if(isset($_REQUEST)){
+    global $wpdb;
+    $download_link = "-";
+    if(strpos($_REQUEST["download"], "wp-content") !== false){
+      $download_link = $_REQUEST["download"];
+      insertToSessionDataTable(
+        $wpdb,
+        $_REQUEST["session_id"],
+        ip_info($_SERVER['REMOTE_ADDR'],"countrycode"),
+        ip_info($_SERVER['REMOTE_ADDR'], "state"),
+        getDevice(),
+        dnsblLookup($_SERVER['REMOTE_ADDR']),
+        $download_link,
+        );
+    }
 
+    die();
+  }
+}
 
 
 function mouse_action(){
@@ -250,9 +294,29 @@ function mouse_action(){
 }
 }
 
+function timer_action(){
+  if(isset($_REQUEST)){
+    global $wpdb;
+    $session_id = $_REQUEST["session_id"];
+    $dates = $wpdb->get_results("SELECT session_date FROM {$wpdb->prefix}session_logs WHERE session_id = \"$session_id\"");
+    $tmp = 0;
+    #print_r($dates);
+    foreach($dates as $date){
+      $value = get_object_vars($date)["session_date"];
+      if($tmp < strtotime($value)){
+        $tmp = strtotime($value);
+      }
+    }
+    $date = date('Y-m-d H:i:s',$tmp);
+    $wpdb->update("{$wpdb->prefix}session_logs", array("time_spent" => $_REQUEST["timer"]), array("session_id" => $session_id, "session_date" => $date));
+    #echo(date('Y-m-d H:i:s',$tmp));
+    die();
+  }
+}
+
+
 function tap_action(){
   if(isset($_REQUEST)){
-    print_r($_REQUEST);
     global $wpdb;
     $buttonArray = array();
     $clickPositions = array();
