@@ -1,2 +1,2 @@
 # UserRecognition
-# This Tool is a ML Algo to recognise a user during surfing on a site
+## This Tool is a Machine Learning Algo to recognise user behavior on website
