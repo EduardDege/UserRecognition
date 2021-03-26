@@ -4,10 +4,19 @@
 """
 
 
+def exportColNames(cursor):
+    columns = []
+
+    for i in cursor.description:
+        columns.append(i[0])
+
+    return columns
+
+
 def dataImport():
     pool = mariadb.ConnectionPool(
         pool_name='pool1',
-        pool_size=2,
+        pool_size=3,
         pool_reset_connection=False,
         host='194.94.127.112',
         user='ifis1',
@@ -18,22 +27,63 @@ def dataImport():
         # These would normally be allocated in separate threads:
         conn1 = pool.get_connection()
         conn2 = pool.get_connection()
+        conn3 = pool.get_connection()
         # Attempting to fetch a 4th connection would throw an exception
         # given the pool_size == 3 option above.
 
+        # get session_logs table
         cursor = conn1.cursor()
-        cursor.execute('SELECT wp.id, wp.session_id, wp.ip_address, wp.login_attempt, '
-                       'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
+        cursor.execute('SELECT session_id, ip_address, session_date, countrycode, state, user_agent, '
+                       'platform, browser, subpage, ip_blacklisten, download_link, time_spent '
+                       'FROM wp_ifiS_02session_logs')
 
-        result_session = cursor
+        session_logs = DataFrame(cursor, columns=exportColNames(cursor))
 
+        # print(session_logs)
+
+        conn1.close()
+
+        # get usermovement table
         cursor = conn2.cursor()
-        cursor.execute('SELECT ur.id, ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-                       'ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
-                       ' FROM wp_ifiS_02user_recognition ur')
+        cursor.execute('SELECT session_id, type, button, click_positions, start_movement, end_movement, subpage '
+                       'FROM wp_ifiS_02usermovement')
 
-        result_ur = cursor
+        usermovement = DataFrame(cursor, columns=exportColNames(cursor))
 
+        # print(usermovement)
+
+        conn2.close()
+
+        # get user_login_data table
+        cursor = conn3.cursor()
+        cursor.execute('SELECT session_id, user_id, login_attempt, login_attempt_date, logout_date, duration '
+                       'FROM wp_ifiS_02user_login_data')
+
+        user_login_data = DataFrame(cursor, columns=exportColNames(cursor))
+
+        # print(user_login_data)
+
+        conn3.close()
+
+        data_frames = [session_logs, user_login_data, usermovement]
+
+        merged = reduce(lambda left, right: pd.merge(left, right, on=['session_id'], how='outer'), data_frames)
+        columns = list(merged)
+
+        #print(merged)
+        #dropped = merged.dropna(thresh=18)
+        #df_merged.dropna()
+        #merged = pd.merge(session_logs, usermovement, how="inner", on="session_id")
+        #merged.drop_duplicates(subset=['session_id'])
+        # print(list(merged))
+
+        # cursor = conn2.cursor()
+        # cursor.execute('SELECT ur.id, ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+        #               'ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+        #              ' FROM wp_ifiS_02user_recognition ur')
+
+        # result_ur = cursor
+        """
         df_session = DataFrame(result_session,
                                columns=["id", "session_id", "ip_address", "login_attempt", "countrycode",
                                         "user_id", "state"])
@@ -54,10 +104,10 @@ def dataImport():
         # pd.set_option('display.max_columns', None)
 
         print(merged)
-
+        """
         # np.savetxt("data.csv", merged, delimiter=",")
 
-        return merged
+        return merged, columns
 
     except mariadb.Error as e:
         print(f"Error:{e}")
@@ -65,13 +115,10 @@ def dataImport():
 
 def prepareData():
     start_time = time.time()
-    merged = dataImport()
-
-    cat_cols = ["browser", "browser_version", "user_agent", "platform",
-                "login_attempt", "login_date", "logout_date", "duration",
-                "loginstatus", "subpage", "session_id", "ip_address", "countrycode",
-                "user_id", "state"]
-
+    data, cols = dataImport()
+    merged = data
+    cat_cols = cols
+    print(merged)
     for var in cat_cols:
         number = preprocessing.LabelEncoder()
         merged[var] = number.fit_transform(merged[var].astype('str'))
@@ -80,15 +127,15 @@ def prepareData():
     '''np.savetxt("data2.csv", merged, delimiter=",")'''
 
     df_values = merged.values
-
+    #print(df_values)
     min_max_scaler = preprocessing.MinMaxScaler()
     merged_scaled = min_max_scaler.fit_transform(df_values)
     data = pd.DataFrame(merged_scaled)
     '''np.savetxt("data3.csv", data, delimiter=",")'''
     x_data, y_data = np.array_split(data, 2)
 
-    '''print(x_data)
-    print(y_data)'''
+    print(x_data)
+    print(y_data)
 
     if len(x_data) != len(y_data):
         # X_train.drop(X_train.tail(1).index, inplace = True)
@@ -99,7 +146,7 @@ def prepareData():
     # ohe = preprocessing.OneHotEncoder(handle_unknown="ignore")
 
     print(time.time() - start_time)
-
+    print("X_train")
     return X_train, X_test, y_train, y_test
 
 
@@ -241,6 +288,7 @@ if __name__ == '__main__':
     import mysql.connector
     from mysql.connector import Error
     import time
+    from functools import reduce
     import pandas as pd
     from pandas import DataFrame
     from sklearn import preprocessing
@@ -258,5 +306,7 @@ if __name__ == '__main__':
     from keras.utils import to_categorical
     from sklearn.metrics import mean_squared_error
 
+    prepareData()
     # modelBuilding()
-    dataImport()
+    # dataImport()
+    # xportDBUBAIFIS()
