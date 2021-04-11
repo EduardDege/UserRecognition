@@ -4,7 +4,7 @@
 """
 
 
-def exportDBUBAIFIS():
+def export_db_ubaifis():
     start_time = time.time()
     connection = mysql.connector.connect(host='194.94.127.112',
                                          database='WordPress',
@@ -119,4 +119,4 @@ if __name__ == '__main__':
     import pandas as pd
     from pandas import DataFrame
 
-    exportDBUBAIFIS()
+    export_db_ubaifis()
