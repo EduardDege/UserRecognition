@@ -4,7 +4,174 @@
 """
 
 
-def export_db_ubaifis():
+def exportColNames(cursor):
+    columns = []
+
+    for i in cursor.description:
+        columns.append(i[0])
+
+    return columns
+
+
+def dataImport():
+    pool = mariadb.ConnectionPool(
+        pool_name='pool1',
+        pool_size=3,
+        pool_reset_connection=False,
+        host='194.94.127.112',
+        user='ifis1',
+        password='b0QrDr8ShG#e@iMWDwGKlgw3',
+        database='WordPress',
+    )
+    try:
+        # These would normally be allocated in separate threads:
+        conn1 = pool.get_connection()
+        conn2 = pool.get_connection()
+        conn3 = pool.get_connection()
+        # Attempting to fetch a 4th connection would throw an exception
+        # given the pool_size == 3 option above.
+
+        # get session_logs table
+        cursor = conn1.cursor()
+        cursor.execute('SELECT session_id, ip_address, session_date, countrycode, state, user_agent, '
+                       'platform, browser, subpage, ip_blacklisten, download_link, time_spent '
+                       'FROM wp_ifiS_02session_logs')
+
+        session_logs = DataFrame(cursor, columns=exportColNames(cursor))
+
+        # print(session_logs)
+
+        conn1.close()
+
+        # get usermovement table
+        cursor = conn2.cursor()
+        cursor.execute('SELECT session_id, type, button, click_positions, start_movement, end_movement, subpage '
+                       'FROM wp_ifiS_02usermovement')
+
+        usermovement = DataFrame(cursor, columns=exportColNames(cursor))
+
+        # print(usermovement)
+
+        conn2.close()
+
+        # get user_login_data table
+        cursor = conn3.cursor()
+        cursor.execute('SELECT session_id, user_id, login_attempt, login_attempt_date, logout_date, duration '
+                       'FROM wp_ifiS_02user_login_data')
+
+        user_login_data = DataFrame(cursor, columns=exportColNames(cursor))
+
+        # print(user_login_data)
+
+        conn3.close()
+
+        data_frames = [session_logs, user_login_data, usermovement]
+
+        merged = reduce(lambda left, right: pd.merge(left, right, on=['session_id'], how='outer'), data_frames)
+        columns = list(merged)
+
+        #print(merged)
+        #dropped = merged.dropna(thresh=18)
+        #df_merged.dropna()
+        #merged = pd.merge(session_logs, usermovement, how="inner", on="session_id")
+        #merged.drop_duplicates(subset=['session_id'])
+        # print(list(merged))
+
+        # cursor = conn2.cursor()
+        # cursor.execute('SELECT ur.id, ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
+        #               'ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
+        #              ' FROM wp_ifiS_02user_recognition ur')
+
+        # result_ur = cursor
+        """
+        df_session = DataFrame(result_session,
+                               columns=["id", "session_id", "ip_address", "login_attempt", "countrycode",
+                                        "user_id", "state"])
+        df_ur = DataFrame(result_ur, columns=["id", "user_id", "browser", "browser_version", "user_agent", "platform",
+                                              "login_date", "logout_date", "duration",
+                                              "loginstatus", "subpage"])
+        conn1.close()
+        conn2.close()
+        merged = pd.merge(df_ur, df_session, how='inner', on="user_id", validate="many_to_many")
+        frames = [df_session, df_ur]
+        concat = pd.concat(frames)
+        # merged = merged.dropna()
+        # pd.set_option('display.max_columns', None)
+        print(merged)
+        """
+        # np.savetxt("data.csv", merged, delimiter=",")
+
+        return merged, columns
+
+    except mariadb.Error as e:
+        print(f"Error:{e}")
+
+
+def prepareData():
+    start_time = time.time()
+    data, cols = dataImport()
+    merged = data
+    cat_cols = cols
+    print(merged)
+    for var in cat_cols:
+        number = preprocessing.LabelEncoder()
+        merged[var] = number.fit_transform(merged[var].astype('str'))
+
+    # print(type(merged))
+    '''np.savetxt("data2.csv", merged, delimiter=",")'''
+
+    df_values = merged.values
+    #print(df_values)
+    min_max_scaler = preprocessing.MinMaxScaler()
+    merged_scaled = min_max_scaler.fit_transform(df_values)
+    data = pd.DataFrame(merged_scaled)
+    '''np.savetxt("data3.csv", data, delimiter=",")'''
+    x_data, y_data = np.array_split(data, 2)
+
+    print(x_data)
+    print(y_data)
+
+    if len(x_data) != len(y_data):
+        # X_train.drop(X_train.tail(1).index, inplace = True)
+        x_data = x_data.head(-1)
+
+    X_train, X_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.3, random_state=42)
+
+    # ohe = preprocessing.OneHotEncoder(handle_unknown="ignore")
+
+    print(time.time() - start_time)
+    print("X_train")
+    return X_train, X_test, y_train, y_test
+
+
+def modelBuilding():
+    # 0 = X_train, 1 = X_test, 2 = y_train, 3 = y_test
+    data = prepareData()
+    # modelbuilding with random forest
+    '''random.seed(42)
+    rf = RandomForestRegressor(n_estimators=10)
+    rf.fit(X_train, y_train)'''
+
+    # modelbuilding using keras
+    # 15 input neurons, 100 hidden layer1 neurons, 50 hidden layer2 neurons, 15 output neuron
+    model = Sequential()
+    model.add(Dense(100, input_dim=15, activation="relu"))
+    model.add(Dense(50, activation="relu"))
+    model.add(Dense(15))
+    model.summary()
+
+    model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mean_squared_error"])
+
+    # model.fit(data[0], data[2], epochs=10)
+
+    model.fit(data[0], data[2], epochs=10, validation_data=(data[1], data[3]))
+
+    pred = model.predict(data[1])
+    score = np.sqrt(mean_squared_error(data[3], pred))
+    print(score)
+
+
+def exportDBUBAIFIS():
     start_time = time.time()
     connection = mysql.connector.connect(host='194.94.127.112',
                                          database='WordPress',
@@ -96,10 +263,10 @@ def export_db_ubaifis():
             # pd.set_option("display.width", None)
 
             print(merged)
-            # print(result, "\n")
-            # print(len(result_session), "\n")
-            # print(len(result_ur),"\n")
-            # print(time.time() - start_time)
+            # print(result)
+            print(len(result_session))
+            print(len(result_ur))
+            print(time.time() - start_time)
 
     except Error as e:
         print("Error while connecting to MySQL", e)
@@ -108,7 +275,6 @@ def export_db_ubaifis():
             cursor.close()
             connection.close()
             print("MySQL connection is closed")
-            print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
@@ -116,7 +282,25 @@ if __name__ == '__main__':
     import mysql.connector
     from mysql.connector import Error
     import time
+    from functools import reduce
     import pandas as pd
     from pandas import DataFrame
+    from sklearn import preprocessing
+    from sklearn.model_selection import train_test_split
+    import numpy as np
+    import mariadb
+    from sklearn.neighbors import KNeighborsClassifier
+    import random
+    from sklearn.ensemble import RandomForestRegressor
+    import warnings
 
-    export_db_ubaifis()
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    from keras.models import Sequential
+    from keras.layers import Dense
+    from keras.utils import to_categorical
+    from sklearn.metrics import mean_squared_error
+
+    prepareData()
+    # modelBuilding()
+    # dataImport()
+    # xportDBUBAIFIS()
