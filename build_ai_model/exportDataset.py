@@ -2,18 +2,104 @@
  This is the Tool to analyse a Use Behavior on a Wordpress-Website
  The User can be blocker, if the Machine Learning Algo evaluate the use ask risk
 """
+import sys
+import time
+from mysql.connector import Error
+from mysql.connector import pooling
+import mariadb
+import json
+from pathlib import Path
+from sklearn.preprocessing import MinMaxScaler
+from functools import reduce
+import numpy as np
+import pandas as pd
+import scipy
+from pandas import DataFrame
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import Normalizer
+from sklearn.neighbors import KNeighborsClassifier
+import random
+from sklearn.ensemble import RandomForestRegressor
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+# from keras.models import Sequential
+# from keras.layers import Dense
+# from keras.utils import to_categorical
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from sklearn.metrics import mean_squared_error
 
+
+def rescale_data():
+    
+    url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.csv"
+    names = ['preg', 'plas', 'pres', 'skin', 'test', 'mass', 'pedi', 'age', 'class']
+    dataframe = pd.read_csv(url, names=names)
+    array = dataframe.values
+    # separate array into input and output components
+    X = array[:,0:8]
+    Y = array[:,8]
+    print(X)
+    #print(Y)
+    scaler = Normalizer().fit(X)
+    normalizedX = scaler.transform(X)
+    # summarize transformed data
+    np.set_printoptions(precision=3)
+    print(normalizedX[0:5,:])
+    print('Rows: %d' % X.shape[0])
+    #print('Cols: %d' % Y.shape[1])
+    
+    
+def get_dataset():
+    sys.stdout.write('Loading Dataset\n')
+    sys.stdout.flush()
+    
+    try:
+        connection_pool = pooling.MySQLConnectionPool(pool_name="sessions_logs_pool",
+                                                    pool_size=3,
+                                                    pool_reset_session=True,
+                                                    host='194.94.127.112',
+                                                    database='WordPress',
+                                                    user='ifis1',
+                                                    password='b0QrDr8ShG#e@iMWDwGKlgw3')
+
+        print("Printing connection pool properties ")
+        print("Connection Pool Name - ", connection_pool.pool_name)
+        print("Connection Pool Size - ", connection_pool.pool_size)
+
+        # Get connection object from a pool
+        connection_object = connection_pool.get_connection()
+
+        if connection_object.is_connected():
+            db_Info = connection_object.get_server_info()
+            print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
+
+            cursor = connection_object.cursor()
+            cursor.execute('SELECT session_id, ip_address, session_date, countrycode, state, user_agent, '
+                       'platform, browser, subpage, ip_blacklisten, download_link, time_spent '
+                       'FROM wp_ifiS_02session_logs')
+            record = cursor.fetchone()
+            print("Your connected to - ", record)
+
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            print("MySQL connection is closed")
 
 def exportColNames(cursor):
     columns = []
-
     for i in cursor.description:
         columns.append(i[0])
-
     return columns
 
 
-def dataImport():
+def get_dataset():
     pool = mariadb.ConnectionPool(
         pool_name='pool1',
         pool_size=3,
@@ -70,36 +156,9 @@ def dataImport():
         merged = reduce(lambda left, right: pd.merge(left, right, on=['session_id'], how='outer'), data_frames)
         columns = list(merged)
 
-        #print(merged)
-        #dropped = merged.dropna(thresh=18)
-        #df_merged.dropna()
-        #merged = pd.merge(session_logs, usermovement, how="inner", on="session_id")
-        #merged.drop_duplicates(subset=['session_id'])
-        # print(list(merged))
-
-        # cursor = conn2.cursor()
-        # cursor.execute('SELECT ur.id, ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-        #               'ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
-        #              ' FROM wp_ifiS_02user_recognition ur')
-
-        # result_ur = cursor
-        """
-        df_session = DataFrame(result_session,
-                               columns=["id", "session_id", "ip_address", "login_attempt", "countrycode",
-                                        "user_id", "state"])
-        df_ur = DataFrame(result_ur, columns=["id", "user_id", "browser", "browser_version", "user_agent", "platform",
-                                              "login_date", "logout_date", "duration",
-                                              "loginstatus", "subpage"])
-        conn1.close()
-        conn2.close()
-        merged = pd.merge(df_ur, df_session, how='inner', on="user_id", validate="many_to_many")
-        frames = [df_session, df_ur]
-        concat = pd.concat(frames)
-        # merged = merged.dropna()
-        # pd.set_option('display.max_columns', None)
-        print(merged)
-        """
-        # np.savetxt("data.csv", merged, delimiter=",")
+        # print(merged)
+        print('Rows: %d' % merged.shape[0])
+        print('Cols: %d' % merged.shape[1]) 
 
         return merged, columns
 
@@ -107,12 +166,12 @@ def dataImport():
         print(f"Error:{e}")
 
 
-def prepareData():
-    start_time = time.time()
-    data, cols = dataImport()
+def get_preprocessed_dataset():
+    # start_time = time.time()
+    data, cols = get_dataset()
     merged = data
     cat_cols = cols
-    print(merged)
+    # print(merged)
     for var in cat_cols:
         number = preprocessing.LabelEncoder()
         merged[var] = number.fit_transform(merged[var].astype('str'))
@@ -121,15 +180,15 @@ def prepareData():
     '''np.savetxt("data2.csv", merged, delimiter=",")'''
 
     df_values = merged.values
-    #print(df_values)
+    # print(df_values)
     min_max_scaler = preprocessing.MinMaxScaler()
     merged_scaled = min_max_scaler.fit_transform(df_values)
     data = pd.DataFrame(merged_scaled)
     '''np.savetxt("data3.csv", data, delimiter=",")'''
     x_data, y_data = np.array_split(data, 2)
 
-    print(x_data)
-    print(y_data)
+    # print(x_data)
+    # print(y_data)
 
     if len(x_data) != len(y_data):
         # X_train.drop(X_train.tail(1).index, inplace = True)
@@ -139,14 +198,15 @@ def prepareData():
 
     # ohe = preprocessing.OneHotEncoder(handle_unknown="ignore")
 
-    print(time.time() - start_time)
-    print("X_train")
+    # print(time.time() - start_time)
+    # print(X_train)
     return X_train, X_test, y_train, y_test
 
 
-def modelBuilding():
+def generate_model():
     # 0 = X_train, 1 = X_test, 2 = y_train, 3 = y_test
-    data = prepareData()
+    data = get_preprocessed_dataset()
+    print(data[0])
     # modelbuilding with random forest
     '''random.seed(42)
     rf = RandomForestRegressor(n_estimators=10)
@@ -154,153 +214,46 @@ def modelBuilding():
 
     # modelbuilding using keras
     # 15 input neurons, 100 hidden layer1 neurons, 50 hidden layer2 neurons, 15 output neuron
-    model = Sequential()
-    model.add(Dense(100, input_dim=15, activation="relu"))
-    model.add(Dense(50, activation="relu"))
-    model.add(Dense(15))
+    # input_shape = (8959, 23, 23, 1)
+    input_shape = (8959, 23, 23, 1)
+    model = tf.keras.Sequential()
+    model.add(layers.Dense(100, activation="relu", input_shape=input_shape))
+    model.add(layers.Dense(50, activation="relu"))
+    model.add(layers.Dense(25))
     model.summary()
 
     model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mean_squared_error"])
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
 
     # model.fit(data[0], data[2], epochs=10)
 
-    model.fit(data[0], data[2], epochs=10, validation_data=(data[1], data[3]))
+    # model.fit(data[0], data[2], epochs=10, validation_data=(data[1], data[3]))
 
-    pred = model.predict(data[1])
-    score = np.sqrt(mean_squared_error(data[3], pred))
-    print(score)
+    train_data = tf.data.Dataset.from_tensor_slices((data[0], data[2]))
+    # print(train_data)
+    valid_data = tf.data.Dataset.from_tensor_slices((data[1], data[3]))
 
-
-def exportDBUBAIFIS():
-    start_time = time.time()
-    connection = mysql.connector.connect(host='194.94.127.112',
-                                         database='WordPress',
-                                         user='ifis1',
-                                         password='b0QrDr8ShG#e@iMWDwGKlgw3')
-    try:
-        if connection.is_connected():
-            db_info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_info)
-            cursor = connection.cursor()
-            cursor.execute("select database();")
-            record = cursor.fetchone()
-            print("You're connected to database: ", record)
-
-            my_cursor = connection.cursor()
-
-            # 190 sec
-            '''my_cursor.execute('SELECT wp_ifiS_02session.session_id AS session_id, '
-                              'wp_ifiS_02session.ip_address AS ip_address, '
-                              'wp_ifiS_02session.login_attempt AS login_attempt, '
-                              'wp_ifiS_02session.attempt_date AS attempt_date, '
-                              'wp_ifiS_02session.countrycode AS countrycode, '
-                              'wp_ifiS_02session.state AS state, wp_ifiS_02user_recognition.browser AS browser, '
-                              'wp_ifiS_02user_recognition.browser_version AS browser_version, '
-                              'wp_ifiS_02user_recognition.user_agent AS user_agent, '
-                              'wp_ifiS_02user_recognition.platform AS platform, '
-                              'wp_ifiS_02user_recognition.login_attempt AS login_attempt, '
-                              'wp_ifiS_02user_recognition.login_date AS login_date, '
-                              'wp_ifiS_02user_recognition.logout_date AS logout_date, '
-                              'wp_ifiS_02user_recognition.duration AS duration, '
-                              'wp_ifiS_02user_recognition.loginstatus AS loginstatus, '
-                              'wp_ifiS_02user_recognition.subpage AS subpage '
-                              'FROM wp_ifiS_02session '
-                              'JOIN wp_ifiS_02user_recognition ON '
-                              'wp_ifiS_02session.user_id = wp_ifiS_02user_recognition.user_id')'''
-            # 167 sec
-            '''my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, wp.countrycode, wp.user_id,'
-                              'wp.state, ur.browser, ur.browser_version, ur.user_agent, ur.platform,'
-                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus,'
-                              'ur.subpage FROM wp_ifiS_02session wp '
-                              'INNER JOIN wp_ifiS_02user_recognition ur '
-                              'ON ur.user_id = wp.user_id '
-                              )'''
-            # 164 sec
-            '''my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
-                              'wp.countrycode, wp.user_id, wp.state, reco.*'
-                              ' FROM ( SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
-                              ' FROM wp_ifiS_02user_recognition ur'
-                              ') reco '
-                              'INNER JOIN wp_ifiS_02session wp ON wp.user_id = reco.user_id')'''
-            # 165 sec
-            ''' my_cursor.execute('WITH sub AS ('
-                              'SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
-                              'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp'
-                              ')'
-                              'SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, '
-                              'ur.loginstatus, ur.subpage, sub.*'
-                              ' FROM wp_ifiS_02user_recognition ur INNER JOIN sub ON ur.user_id = sub.user_id')'''
-
-            my_cursor.execute('SELECT wp.session_id, wp.ip_address, wp.login_attempt, '
-                              'wp.countrycode, wp.user_id, wp.state FROM wp_ifiS_02session wp')
-
-            result_session = my_cursor.fetchall()
-
-            my_cursor.execute('SELECT ur.user_id, ur.browser, ur.browser_version, ur.user_agent, ur.platform, '
-                              'ur.login_attempt, ur.login_date, ur.logout_date, ur.duration, ur.loginstatus, ur.subpage'
-                              ' FROM wp_ifiS_02user_recognition ur')
-            result_ur = my_cursor.fetchall()
-
-            names = ["session_id", "ip_address"]
-            # df = DataFrame(result, columns=["session_id", "ip_address"])
-
-            df_session = DataFrame(result_session, columns=["session_id", "ip_address", "login_attempt", "countrycode",
-                                                            "user_id", "state"])
-            df_ur = DataFrame(result_ur, columns=["user_id", "browser", "browser_version", "user_agent", "platform",
-                                                  "login_attempt", "login_date", "logout_date", "duration",
-                                                  "loginstatus", "subpage"])
-
-            merged = pd.merge(df_session, df_ur, how='inner', left_on='user_id', right_on='user_id')
-
-            frames = [df_session, df_ur]
-
-            result = pd.concat(frames)
-
-            # pd.set_option("display.max_rows", None)
-            # pd.set_option("display.max_columns", None)
-            # pd.set_option("display.width", None)
-
-            print(merged)
-            # print(result)
-            print(len(result_session))
-            print(len(result_ur))
-            print(time.time() - start_time)
-
-    except Error as e:
-        print("Error while connecting to MySQL", e)
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("MySQL connection is closed")
+    # fit the keras model on the dataset -> Model Convergence
+    model.fit(train_data, epochs=200, validation_data=valid_data)
+    #sys.stdout.flush()
+    #model.save_weights('./models/convnet_weights.h5')
+    #pred = model.predict(data[1])
+    #score = np.sqrt(mean_squared_error(data[3], pred))
+    #print(score)
 
 
+def main():
+    # rescale_data()
+    # get_dataset()
+    #get_preprocessed_dataset()
+    generate_model()
+    
 if __name__ == '__main__':
-    import pymysql
-    import mysql.connector
-    from mysql.connector import Error
-    import time
-    from functools import reduce
-    import pandas as pd
-    from pandas import DataFrame
-    from sklearn import preprocessing
-    from sklearn.model_selection import train_test_split
-    import numpy as np
-    import mariadb
-    from sklearn.neighbors import KNeighborsClassifier
-    import random
-    from sklearn.ensemble import RandomForestRegressor
-    import warnings
-
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    from keras.models import Sequential
-    from keras.layers import Dense
-    from keras.utils import to_categorical
-    from sklearn.metrics import mean_squared_error
-
-    prepareData()
-    # modelBuilding()
-    # dataImport()
-    # xportDBUBAIFIS()
+    # execute only if run as a script
+    start = time.time()
+    main()
+    end = time.time()
+    hours, rem = divmod(end-start, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
