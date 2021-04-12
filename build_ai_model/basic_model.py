@@ -1,8 +1,10 @@
 import sys
 import time
-import json
+from mysql.connector import Error
+from mysql.connector import pooling
 from pathlib import Path
 import numpy as np
+import json
 
    
 def get_dataset():

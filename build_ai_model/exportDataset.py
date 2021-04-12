@@ -23,13 +23,12 @@ import random
 from sklearn.ensemble import RandomForestRegressor
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
-# from keras.models import Sequential
-# from keras.layers import Dense
-# from keras.utils import to_categorical
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.metrics import mean_squared_error
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import *
 
 
 def rescale_data():
@@ -144,7 +143,6 @@ def get_preprocessed_dataset():
     min_max_scaler = preprocessing.MinMaxScaler()
     merged_scaled = min_max_scaler.fit_transform(df_values)
     data = pd.DataFrame(merged_scaled)
-    '''np.savetxt("data3.csv", data, delimiter=",")'''
     x_data, y_data = np.array_split(data, 2)
 
     # print(x_data)
@@ -166,7 +164,10 @@ def get_preprocessed_dataset():
 def generate_model():
     # 0 = X_train, 1 = X_test, 2 = y_train, 3 = y_test
     data = get_preprocessed_dataset()
-    print(data[0])
+    start_xy = np.array(data)
+    start_xy = start_xy.reshape(*start_xy.shape, 1)
+
+    #print(start_xy)
     # modelbuilding with random forest
     '''random.seed(42)
     rf = RandomForestRegressor(n_estimators=10)
@@ -175,15 +176,16 @@ def generate_model():
     # modelbuilding using keras
     # 15 input neurons, 100 hidden layer1 neurons, 50 hidden layer2 neurons, 15 output neuron
     # input_shape = (8959, 23, 23, 1)
-    input_shape = (8959, 23, 23, 1)
+    # input_shape = (8959, 23, 23, 1)
+    # model.add(layers.Dense(100, activation="relu", input_shape=start_xy.shape[1:3]))
     model = tf.keras.Sequential()
-    model.add(layers.Dense(100, activation="relu", input_shape=input_shape))
+    model.add(layers.Dense(100, activation="relu", input_shape = (8959, 23, 23, 1)))
     model.add(layers.Dense(50, activation="relu"))
     model.add(layers.Dense(25))
     model.summary()
 
-    model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mean_squared_error"])
-    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mean_squared_error"])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
     # model.fit(data[0], data[2], epochs=10)
@@ -195,19 +197,42 @@ def generate_model():
     valid_data = tf.data.Dataset.from_tensor_slices((data[1], data[3]))
 
     # fit the keras model on the dataset -> Model Convergence
-    model.fit(train_data, epochs=200, validation_data=valid_data)
+    model.fit(train_data, epochs=10, validation_data=valid_data)
     #sys.stdout.flush()
     #model.save_weights('./models/convnet_weights.h5')
-    #pred = model.predict(data[1])
-    #score = np.sqrt(mean_squared_error(data[3], pred))
-    #print(score)
+    pred = model.predict(data[1])
+    score = np.sqrt(mean_squared_error(data[3], pred))
+    print(score)
 
+def create_model():
+    # 0 = X_train, 1 = X_test, 2 = y_train, 3 = y_test
+    X_train, X_test, y_train, y_test = get_preprocessed_dataset()
+    print(X_train)
+    x = np.random.randint(0,X_test, X_train)
+    y = np.eye((y_train))[np.random.randint(0,X_test,X_train)]
+    xr = x.reshape((-1,1))
+
+
+    # print("x.shape: {}\nxr.shape:{}\ny.shape: {}".format(x.shape, xr.shape, y.shape))
+
+
+    #model = Sequential()
+    #model.add(Embedding(2557, 64, input_length=1, embeddings_initializer='glorot_uniform'))
+    #model.add(Reshape((64,)))
+    #model.add(Dense(512, activation='sigmoid'))
+    #model.add(Dense(2557, activation='softmax'))
+
+    #model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    #model.summary()
+
+    #history=model.fit(xr, y, epochs=20, batch_size=32, validation_split=3/9)
 
 def main():
     # rescale_data()
     # get_dataset()
     #get_preprocessed_dataset()
-    generate_model()
+    # generate_model()
+    create_model()
     
 if __name__ == '__main__':
     # execute only if run as a script
